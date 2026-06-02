@@ -1,0 +1,26 @@
+{
+  "name": "minimax-reddit-clone",
+  "version": "0.0.0",
+  "description": "A high-fidelity front-end clone of Reddit (https://www.reddit.com/) built as an engineering project with comprehensive mock data and version-controlled releases.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "lint": "node scripts/lint.mjs",
+    "test": "node scripts/test.mjs",
+    "build": "node scripts/build.mjs"
+  },
+  "keywords": [
+    "reddit",
+    "clone",
+    "spa",
+    "vanilla-js",
+    "mock-data"
+  ],
+  "author": "peckerpro",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}

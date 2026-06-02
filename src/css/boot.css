@@ -1,0 +1,30 @@
+/* Boot screen — visible only on v0.0.0 (skeleton release). */
+
+.boot-screen {
+  max-width: 640px;
+  margin: 10vh auto;
+  padding: var(--spacer-8);
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.boot-screen h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacer-3);
+}
+
+.boot-screen p {
+  color: var(--color-text-secondary);
+  margin-block: var(--spacer-2);
+}
+
+.boot-screen code {
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-sm);
+  background: var(--color-bg-subtle);
+  padding: 0 var(--spacer-1);
+  border-radius: var(--radius-sm);
+}

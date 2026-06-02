@@ -1,0 +1,12 @@
+/* ====================================================================
+ * minimax-reddit-clone — main stylesheet entry
+ *
+ * v0.0.0 is a skeleton: this file only sets up the design tokens that
+ * every later version will share, plus minimal reset + boot screen.
+ *
+ * Order matters: variables → reset → base → components (added later).
+ * ================================================================== */
+
+@import url("./variables.css");
+@import url("./reset.css");
+@import url("./boot.css");
