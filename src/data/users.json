@@ -1,0 +1,28 @@
+{
+  "users": [
+    { "id": "u_serenesk", "name": "serene_sketch",    "color": "#ff4500", "karma": 124530 },
+    { "id": "u_logwelder","name": "Logical_Welder3467","color": "#46d160", "karma":  89211 },
+    { "id": "u_marvel",   "name": "MarvelsGrantMan136","color": "#7193ff", "karma": 412008 },
+    { "id": "u_himiko",   "name": "HimikoTogaFromUSSR","color": "#a02cd2", "karma":  23890 },
+    { "id": "u_occulus",  "name": "occulus_ritteri",  "color": "#0dd3bb", "karma":  18700 },
+    { "id": "u_zenos",    "name": "zenos_analytica",  "color": "#ffb000", "karma": 304800 },
+    { "id": "u_pixel",    "name": "pixel_witch",      "color": "#d93b3b", "karma":  21090 },
+    { "id": "u_404",      "name": "404_dreamer",      "color": "#1c1c1c", "karma":  98760 },
+    { "id": "u_brew",     "name": "BrewMasterJ",      "color": "#a06a37", "karma":  45000 },
+    { "id": "u_gadget",   "name": "gadget_geek",      "color": "#0b3d91", "karma":  67200 },
+    { "id": "u_snek",     "name": "snek_99",          "color": "#46d160", "karma":  42018 },
+    { "id": "u_luna",     "name": "luna_tides",       "color": "#ff5e9c", "karma":  17400 },
+    { "id": "u_kai",      "name": "kaiju_archivist",  "color": "#2c3e50", "karma":  68000 },
+    { "id": "u_yumiko",   "name": "yumiko_san",       "color": "#ff8717", "karma":  12400 },
+    { "id": "u_otto",     "name": "otto_von_bismark", "color": "#1d1d1f", "karma":  28900 },
+    { "id": "u_borealis", "name": "borealis",         "color": "#0079d3", "karma":  30000 },
+    { "id": "u_mochi",    "name": "mochi_dev",        "color": "#f7df1e", "karma":   9100 },
+    { "id": "u_ari",      "name": "ari_satellite",    "color": "#a02cd2", "karma":  14600 },
+    { "id": "u_helix",    "name": "helix_fork",       "color": "#0dd3bb", "karma":  25400 },
+    { "id": "u_tachyon",  "name": "tachyon_at_rest",  "color": "#ff4500", "karma":  50000 },
+    { "id": "u_ada",      "name": "ada_lovelace_jr",  "color": "#ffd635", "karma":  87200 },
+    { "id": "u_oblivion", "name": "oblivion_fox",     "color": "#5b3a8a", "karma":  18000 },
+    { "id": "u_quark",    "name": "quark_gluon",      "color": "#0079d3", "karma":  33100 },
+    { "id": "u_neo",      "name": "neo_arcadia",      "color": "#46d160", "karma":  19400 }
+  ]
+}
