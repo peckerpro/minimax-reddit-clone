@@ -21,6 +21,4 @@
 @import url("./comment.css");
 @import url("./empty.css");
 @import url("./subreddit.css");
-/* later versions will append:
- *   modal.css         (v0.6.0)
- */
+@import url("./modal.css");

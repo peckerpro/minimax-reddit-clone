@@ -26,6 +26,7 @@ const ICONS = {
   help: `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 5M12 17h.01" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>`,
   logout: `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
   pin: `<path d="M12 17v5M9 10V4h6v6l3 3v2H6v-2l3-3Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  shield: `<path d="M12 3 4 6v6c0 4.5 3.4 8.5 8 9 4.6-.5 8-4.5 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
 };
 
 /**
