@@ -185,6 +185,22 @@ function UserMenuPanel() {
  * @param {{ onHamburger: () => void }} [handlers]
  */
 export function Header({ onHamburger } = {}) {
+  const right = h("div", { class: "header__right" });
+  function renderRight() {
+    right.replaceChildren(UserMenuButton());
+  }
+  renderRight();
+
+  // Re-render the right side whenever the auth state changes (login, logout,
+  // or any other state mutation that touches the user).
+  let lastUser = state.get().user;
+  state.subscribe((s) => {
+    if (s.user !== lastUser) {
+      lastUser = s.user;
+      renderRight();
+    }
+  });
+
   const root = h(
     "header",
     { class: "header", role: "banner" },
@@ -194,7 +210,7 @@ export function Header({ onHamburger } = {}) {
       HamburgerButton({ onOpen: onHamburger }),
       Logo(),
       SearchBox(),
-      h("div", { class: "header__right" }, UserMenuButton())
+      right
     )
   );
   return root;
