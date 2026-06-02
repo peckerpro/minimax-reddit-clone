@@ -1,114 +1,23 @@
-// Minimal zero-dependency static dev server.
-// Run: node scripts/serve.mjs [port]
-import { createServer as createHttpServer } from "node:http";
-import { readFile, stat } from "node:fs/promises";
-import { extname, join, normalize, resolve, sep } from "node:path";
+// scripts/serve.mjs (v3.0.0 shim)
+//
+// v2.x used this as the standalone static dev server. v3.0.0 unified
+// serving into `server/index.mjs` (frontend + /api on the same port).
+// This shim keeps the old entry point working for muscle memory and
+// older tooling, but it just spawns the new server.
+
+import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const ROOT = resolve(__dirname, "..");
-const PREFERRED_PORT = Number(process.argv[2] || process.env.PORT || 5173);
+const server = resolve(__dirname, "..", "server", "index.mjs");
+const port = process.argv[2] || process.env.PORT || 5173;
 
-const MIME = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8",
-  ".mjs": "text/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".svg": "image/svg+xml",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".webp": "image/webp",
-  ".ico": "image/x-icon",
-  ".md": "text/markdown; charset=utf-8",
-  ".txt": "text/plain; charset=utf-8",
-};
-
-function safeJoin(root, urlPath) {
-  // strip query, decode
-  const cleanPath = decodeURIComponent(urlPath.split("?")[0]);
-  const target = normalize(join(root, cleanPath));
-  // prevent path-traversal escape from ROOT
-  if (target !== ROOT && !target.startsWith(ROOT + sep)) return null;
-  return target;
-}
-
-const server = createHttpServer(async (req, res) => {
-  try {
-    let urlPath = req.url || "/";
-    if (urlPath === "/") urlPath = "/index.html";
-
-    const target = safeJoin(ROOT, urlPath);
-    if (!target) {
-      res.writeHead(403);
-      res.end("Forbidden");
-      return;
-    }
-
-    let s;
-    try {
-      s = await stat(target);
-    } catch {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end(`404 Not Found: ${urlPath}`);
-      return;
-    }
-
-    let filePath = target;
-    if (s.isDirectory()) {
-      filePath = join(target, "index.html");
-      try {
-        await stat(filePath);
-      } catch {
-        res.writeHead(404, { "Content-Type": "text/plain" });
-        res.end(`404 Not Found: ${urlPath}`);
-        return;
-      }
-    }
-
-    const body = await readFile(filePath);
-    const type = MIME[extname(filePath).toLowerCase()] || "application/octet-stream";
-    res.writeHead(200, {
-      "Content-Type": type,
-      "Cache-Control": "no-cache",
-    });
-    res.end(body);
-  } catch (err) {
-    res.writeHead(500, { "Content-Type": "text/plain" });
-    res.end(`500 Internal Error: ${err && err.message}`);
-  }
+console.log(`[serve.mjs] v3.0.0 shim → spawning server/index.mjs (PORT=${port})`);
+const child = spawn(process.execPath, [server], {
+  stdio: "inherit",
+  env: { ...process.env, PORT: String(port) },
 });
-
-// Find a free port by listening on the main server and retrying on EADDRINUSE.
-// Avoids the TOCTOU race of a "tester" server (close() then re-listen on the
-// same port) which can race on Windows where port release has a small delay.
-function listenWithRetry(srv, port, attempt = 0) {
-  return new Promise((resolve, reject) => {
-    const onError = (err) => {
-      srv.removeListener("listening", onListening);
-      if (err && err.code === "EADDRINUSE" && attempt < 80) {
-        // try next port
-        listenWithRetry(srv, port + 1, attempt + 1).then(resolve, reject);
-      } else {
-        reject(err || new Error(`could not bind a port in [${PREFERRED_PORT}, ${PREFERRED_PORT + 80})`));
-      }
-    };
-    const onListening = () => {
-      srv.removeListener("error", onError);
-      resolve(port);
-    };
-    srv.once("error", onError);
-    srv.once("listening", onListening);
-    srv.listen(port, "0.0.0.0");
-  });
-}
-
-listenWithRetry(server, PREFERRED_PORT)
-  .then((port) => {
-    console.log(`[reddit-clone] dev server  →  http://localhost:${port}`);
-  })
-  .catch((err) => {
-    console.error(`[reddit-clone] failed to bind any port: ${err.message}`);
-    process.exit(1);
-  });
+child.on("exit", (code) => process.exit(code ?? 0));
+process.on("SIGINT", () => child.kill("SIGINT"));
+process.on("SIGTERM", () => child.kill("SIGTERM"));

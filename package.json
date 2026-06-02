@@ -1,12 +1,15 @@
 {
   "name": "minimax-reddit-clone",
-  "version": "2.1.0",
-  "description": "A high-fidelity front-end clone of Reddit (https://www.reddit.com/) built as an engineering project with comprehensive mock data and version-controlled releases.",
+  "version": "3.0.0-m0",
+  "description": "A high-fidelity front-end + Node.js backend clone of Reddit (https://www.reddit.com/) with SQLite persistence, hash router SPA, and zero npm dependencies.",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/serve.mjs",
-    "start": "node scripts/serve.mjs",
+    "dev": "node server/index.mjs",
+    "start": "node server/index.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "reset-db": "node scripts/reset-db.mjs",
+    "health": "node scripts/health.mjs",
     "lint": "node scripts/lint.mjs",
     "test": "node scripts/test.mjs",
     "build": "node scripts/build.mjs"
@@ -14,13 +17,14 @@
   "keywords": [
     "reddit",
     "clone",
-    "spa",
+    "fullstack",
     "vanilla-js",
+    "sqlite",
     "mock-data"
   ],
   "author": "peckerpro",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=22.5"
   }
 }
