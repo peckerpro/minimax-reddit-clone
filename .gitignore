@@ -41,3 +41,7 @@ coverage/
 # Local server artifacts
 .tmp/
 .playwright-mcp/
+
+# opencode tmp + node compile cache (transient, lock-prone)
+.opencode/tmp/
+.opencode/node-compile-cache/

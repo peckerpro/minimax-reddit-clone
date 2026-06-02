@@ -144,12 +144,16 @@ export const api = {
   },
 
   async relatedById(id, n = 4) {
-    const { related } = await load("related");
-    const map = (related?.related || []).find((r) => r.postId === id);
+    // `related` is the top-level of related.json which has shape
+    // { "related": [...mappings...], "comments": {...}, ... }
+    // The `related` key inside is the list of postId → relatedPostIds maps.
+    // We re-load the file to get the inner structure (avoid double-destructure).
+    const data = await load("related");
+    const map = (data?.related || []).find((r) => r.postId === id);
     if (!map) return delay([]);
     const { posts } = await load("posts");
     const idx = indexFor("posts", posts, "id");
-    return delay(map.relatedPostIds.map((id) => idx.get(id)).filter(Boolean).slice(0, n));
+    return delay((map.relatedPostIds || []).map((id) => idx.get(id)).filter(Boolean).slice(0, n));
   },
 
   async searchPosts(q) {
@@ -169,17 +173,19 @@ export const api = {
   // ── comments ───────────────────────────────────────
   async listComments(postId) {
     const { comments } = await load("comments");
-    const direct = comments.comments.filter((c) => c.postId === postId);
-    // include any extra "comments" map (e.g. for more posts)
-    const extras = comments[postId] || [];
-    return delay([...direct, ...extras]);
+    // `comments` IS the array (loaded from comments.json which has shape
+    // { "comments": [...] }). Don't do comments.comments — that's undefined.
+    return delay((comments || []).filter((c) => c.postId === postId));
   },
 
   // ── rules ──────────────────────────────────────────
   async getRules(subredditName) {
+    // rules.json has shape { "rules": { subreddit: [...], ... } }
+    // After destructuring { rules } we already have the inner object, so
+    // we look up by name directly — NOT rules.rules[name].
     const { rules } = await load("rules");
     const name = String(subredditName).replace(/^r\//, "").toLowerCase();
-    return delay(rules.rules[name] || []);
+    return delay((rules || {})[name] || []);
   },
 
   // ── awards / share / report ───────────────────────

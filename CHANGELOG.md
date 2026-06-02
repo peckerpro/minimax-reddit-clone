@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here. Versions follow [SemVer](https://semver.org/).
 
+## v2.0.1 — Critical bugfix: listComments / getRules double-destructure
+
+- Fixed `api.listComments` crashing on `comments.comments.filter(...)` (the
+  destructured `comments` was already the array). This broke the entire
+  post-detail page.
+- Fixed same pattern in `api.getRules` (`rules.rules[name]`).
+- Hardened `api.relatedById` against the same class of bug.
+- New `scripts/api-test.mjs` — 25 API calls exercised with sample data;
+  catches the "returns undefined instead of iterable" class of bug.
+  Result: 25 ok, 0 bad.
+- This is a regression-only patch. No new features.
+
 ## v2.0.0 — Major rewrite, real Reddit clone
 
 - 3-column layout: left nav 272px / main 740px / right rail 316px

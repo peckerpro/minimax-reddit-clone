@@ -33,7 +33,7 @@ const TABS = [
 ];
 
 export async function UserPage({ name, tab = "" }) {
-  const clean = String(name).replace(/^u\//, "");
+  const clean = String(name || "").replace(/^u\//, "").replace(/^u_/, "");
   const u = await api.getUser(clean);
   if (!u) {
     return h(
@@ -45,22 +45,33 @@ export async function UserPage({ name, tab = "" }) {
     );
   }
 
-  const sort = state.get().sort === "top" || state.get().sort === "hot" || state.get().sort === "new" || state.get().sort === "controversial" ? state.get().sort : "hot";
-  const t = state.get().timeRange;
+  const cur = state.get().sort;
+  const sort = ["top", "hot", "new", "controversial"].includes(cur) ? cur : "hot";
+  const t = state.get().timeRange || "all";
 
-  const allPosts = await api.listPosts({ author: clean, sort, t, limit: 50 });
+  // Defensive: api.listPosts always returns Promise<Array> in this codebase.
+  // Wrap in try/catch + Array check so any future regression surfaces as
+  // an empty state instead of a "filter of undefined" crash.
+  let allPosts = [];
+  try {
+    const result = await api.listPosts({ author: clean, sort, t, limit: 50 });
+    allPosts = Array.isArray(result) ? result : [];
+  } catch (e) {
+    console.error("[user-page] listPosts failed", e);
+    allPosts = [];
+  }
 
   // route scoped list
   let list = allPosts;
   let emptyMessage = `${u.name} 还没有公开的帖子。`;
   if (tab === "/saved") {
-    list = allPosts.filter((p) => state.isSaved(p.id));
+    list = (allPosts || []).filter((p) => state.isSaved(p.id));
     emptyMessage = "你还没有收藏任何帖子。";
   } else if (tab === "/hidden") {
-    list = allPosts.filter((p) => state.isHidden(p.id));
+    list = (allPosts || []).filter((p) => state.isHidden(p.id));
     emptyMessage = "你还没有隐藏任何帖子。";
   } else if (tab === "/upvoted") {
-    list = allPosts.filter((p) => state.getVote(p.id) === 1);
+    list = (allPosts || []).filter((p) => state.getVote(p.id) === 1);
     emptyMessage = "你还没有赞过任何帖子。";
   } else if (tab === "/comments") {
     // no real comment mock data — show empty
