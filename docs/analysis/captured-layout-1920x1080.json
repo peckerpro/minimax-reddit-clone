@@ -1,0 +1,75 @@
+{
+  "captured_at": "2026-06-02T17:10:00+08:00",
+  "viewport": { "width": 1920, "height": 1080 },
+  "playwright_connected": true,
+  "source": "real Reddit crawl via playwright MCP",
+  "pages_visited": [
+    "https://www.reddit.com/",
+    "https://www.reddit.com/r/technology/",
+    "https://www.reddit.com/r/technology/comments/1tu89r4/gabe_newell_asked_valves_top_lawyer_what_the_f_do/",
+    "https://www.reddit.com/user/PaiDuck/"
+  ],
+  "layout_1920x1080": {
+    "banner":       { "width": 1888, "x_start": 8,    "x_end": 1896, "y_start": 0 },
+    "left_nav":     { "width": 272,  "x_start": 0,    "x_end": 272,  "y_start": 56 },
+    "main":         { "width": 732,  "x_start": 552,  "x_end": 1284 },
+    "right_sidebar":{ "width": 316,  "x_start": 1308, "x_end": 1624 },
+    "shreddit_post":{ "width": 748,  "x_start": 544,  "x_end": 1292, "note": "intentionally 8px wider than main" }
+  },
+  "left_nav_texts": [
+    "展开\u201c导航\u201d", "折叠\u201c导航\u201d",
+    "最近访问", "r/technology",
+    "资源",
+    "关于 Reddit", "广告", "开发者平台", "Reddit Pro", "测试版", "帮助", "博客", "职业", "新闻",
+    "Reddit 最佳", "Reddit 最佳（葡萄牙语版）", "Reddit 最佳（德语版）",
+    "Reddit 规则", "隐私政策", "用户协议", "辅助功能",
+    "Reddit, Inc. \u00a9 2026\u3002\u4fdd\u7559\u6240\u6709\u6743\u5229\u3002"
+  ],
+  "left_nav_external_links": [
+    { "text": "关于 Reddit", "href": "https://www.redditinc.com" },
+    { "text": "广告",       "href": "https://ads.reddit.com/register?utm_source=web3x_consumer&utm_name=left_nav_cta" },
+    { "text": "开发者平台", "href": "https://developers.reddit.com/?utm_source=reddit&utm_medium=left_nav_resources" },
+    { "text": "Reddit Pro", "href": "/reddit-pro?utm_source=reddit&utm_medium=left_nav_resources" }
+  ],
+  "right_sidebar_home_texts": [
+    "热门社区",
+    "r/explainlikeimfive", "23,560,435 位成员",
+    "r/IAmA",              "22,459,070 位成员",
+    "r/classicwow",        "736,609 位成员",
+    "r/Instagram",         "1,052,746 位成员",
+    "r/NintendoSwitch",    "7,930,843 位成员",
+    "r/Tinder",            "5,925,399 位成员",
+    "r/todayilearned",     "41,439,108 位成员",
+    "r/iphone",            "4,593,112 位成员",
+    "r/ffxiv",             "1,343,411 位成员",
+    "r/nfl",               "12,748,436 位成员",
+    "r/Showerthoughts",    "34,136,404 位成员",
+    "r/Music",             "38,413,238 位成员",
+    "r/FORTnITE",          "703,235 位成员",
+    "r/DotA2",             "1,762,164 位成员",
+    "r/SquaredCircle",     "1,328,341 位成员",
+    "r/keto",              "3,949,776 位成员",
+    "r/Frugal",            "6,783,202 位成员",
+    "r/Overwatch",         "6,142,879 位成员",
+    "r/piercing",          "1,002,011 位成员",
+    "r/worldnews",         "47,361,172 位成员",
+    "查看更多内容",
+    "Reddit 规则", "隐私政策", "用户协议", "辅助功能"
+  ],
+  "sort_options_subreddit": [
+    { "value": "BEST",    "text": "最佳",       "href": "/r/technology/best/" },
+    { "value": "HOT",     "text": "热门",       "href": "/r/technology/hot/" },
+    { "value": "NEW",     "text": "最新",       "href": "/r/technology/new/" },
+    { "value": "TOP",     "text": "最受欢迎",   "href": "/r/technology/top/" },
+    { "value": "RISING",  "text": "热度增加",   "href": "/r/technology/rising/" }
+  ],
+  "post_detail_right_sidebar_sections": [
+    "reddit_signup_cta (logged out only)",
+    "related_posts (3 cross-posts, ~732px each)",
+    "about_subreddit_card"
+  ],
+  "user_page_tabs": ["概述", "帖子", "评论"],
+  "user_page_sort": ["热门", "最受欢迎"],
+  "user_page_time": ["现在", "今天", "本周", "本月", "今年", "所有时间"],
+  "user_page_view": ["卡片", "紧凑"]
+}
