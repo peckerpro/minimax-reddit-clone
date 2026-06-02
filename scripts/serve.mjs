@@ -1,13 +1,14 @@
 // Minimal zero-dependency static dev server.
 // Run: node scripts/serve.mjs [port]
-import { createServer } from "node:http";
+import { createServer as createHttpServer } from "node:http";
+import { createServer as createNetServer } from "node:net";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = resolve(__dirname, "..");
-const PORT = Number(process.argv[2] || process.env.PORT || 5173);
+const PREFERRED_PORT = Number(process.argv[2] || process.env.PORT || 5173);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -34,7 +35,7 @@ function safeJoin(root, urlPath) {
   return target;
 }
 
-const server = createServer(async (req, res) => {
+const server = createHttpServer(async (req, res) => {
   try {
     let urlPath = req.url || "/";
     if (urlPath === "/") urlPath = "/index.html";
@@ -80,6 +81,25 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// Find a free port. Tries PREFERRED_PORT first, then +1, +2, ... up to
+// +79. Logs the chosen port so the user can copy it from the terminal.
+function tryListen(port) {
+  return new Promise((res) => {
+    const tester = createNetServer();
+    tester.once("error", () => res(null));
+    tester.once("listening", () => tester.close(() => res(port)));
+    tester.listen(port, "0.0.0.0");
+  });
+}
+
+async function findPort() {
+  for (let p = PREFERRED_PORT; p < PREFERRED_PORT + 80; p++) {
+    if (await tryListen(p)) return p;
+  }
+  throw new Error("could not find a free port in range");
+}
+
+const PORT = await findPort();
 server.listen(PORT, () => {
   console.log(`[reddit-clone] dev server  →  http://localhost:${PORT}`);
 });
