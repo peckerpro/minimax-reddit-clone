@@ -1,16 +1,18 @@
-// SPA shell: header + sort bar + main slot + sidebar slot + footer.
-// Wires the hamburger to the drawer and exposes a `setView(name, ...)` API
-// for the router.
+// SPA shell: header + left nav + main slot + right rail + footer.
+// 3-column layout: left 272px (or 56px collapsed) / main flex / right 316px
+// Total content 1624px centered with 148px margins on each side at 1920px.
 
 import { h, mount } from "./utils/dom.js";
 import { Header } from "./components/header.js";
 import { SortBar } from "./components/sort-bar.js";
+import { LeftNav } from "./components/left-nav.js";
 import { openDrawer } from "./components/drawer.js";
 import { state } from "./state.js";
 
 export function AppShell() {
   const main = h("main", { class: "main", id: "main-content", tabindex: "-1" });
-  const aside = h("aside", { class: "rail", id: "rail" });
+  const aside = h("aside", { class: "rail", id: "right-sidebar-container" });
+  const leftNav = LeftNav();
   const sortbar = SortBar();
   const footer = h(
     "footer",
@@ -26,14 +28,16 @@ export function AppShell() {
     )
   );
 
+  // header hamburger on desktop now toggles the left nav collapse
   const root = h(
     "div",
     { class: "shell" },
-    Header({ onHamburger: openDrawer }),
+    Header({ onHamburger: () => state.setLeftNavCollapsed(!state.get().leftNavCollapsed) }),
     sortbar,
     h(
       "div",
       { class: "shell__body" },
+      leftNav,
       main,
       aside
     ),

@@ -1,4 +1,5 @@
-/* App shell — the page-level layout that wraps everything. */
+/* App shell — 3-column layout: left nav (272px) + main (flex) + right rail (316px).
+   Content total 1624px centered in 1920px viewport. */
 
 .shell {
   min-height: 100vh;
@@ -8,35 +9,57 @@
 
 .shell__body {
   display: grid;
-  grid-template-columns: minmax(0, var(--layout-feed-width)) var(--layout-sidebar-width);
-  gap: var(--layout-gutter);
-  max-width: var(--layout-max-width);
+  grid-template-columns: 272px minmax(0, 1fr) 316px;
+  gap: 0;
   width: 100%;
+  max-width: 1920px;
   margin: 0 auto;
-  padding: var(--spacer-4);
   flex: 1;
+  align-items: stretch;
+}
+
+@media (min-width: 1921px) {
+  .shell__body {
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 1280px) {
+  .shell__body {
+    grid-template-columns: 56px minmax(0, 1fr) 316px;
+  }
+}
+
+@media (max-width: 960px) {
+  .shell__body {
+    grid-template-columns: 1fr;
+  }
+  .leftnav {
+    display: none;
+  }
+  .rail {
+    display: none;
+  }
 }
 
 .main {
   min-width: 0;
+  padding: var(--spacer-4);
+  max-width: 740px;
+  width: 100%;
+  margin: 0 auto;
   outline: none;
 }
 
 .rail {
   position: sticky;
-  top: calc(var(--layout-header-height) + var(--layout-sortbar-height) + var(--spacer-4));
+  top: calc(var(--layout-header-height) + var(--layout-sortbar-height) + var(--spacer-2));
   align-self: start;
-  max-height: calc(100vh - var(--layout-header-height) - var(--layout-sortbar-height) - var(--spacer-8));
+  max-height: calc(100vh - var(--layout-header-height) - var(--layout-sortbar-height) - var(--spacer-4));
   overflow-y: auto;
-}
-
-@media (max-width: 960px) {
-  .shell__body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .rail {
-    display: none;
-  }
+  padding: var(--spacer-4) var(--spacer-4) var(--spacer-4) 0;
+  width: 316px;
 }
 
 .footer {

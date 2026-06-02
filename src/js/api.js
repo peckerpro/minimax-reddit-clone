@@ -10,6 +10,7 @@ const CACHE = {
   users: null,
   comments: null,
   rules: null,
+  related: null,
 };
 
 function delay(value, ms = NETWORK_DELAY_MS) {
@@ -47,12 +48,27 @@ const SORTS = {
   rising: (a, b) => (b.comments - a.comments) - (a.comments - b.comments),
 };
 
+// apply time range filter to a list of posts
+function applyTimeRange(posts, range) {
+  if (!range || range === "all") return posts;
+  const now = Date.now();
+  const limits = { hour: 3600_000, day: 86400_000, week: 7 * 86400_000, month: 30 * 86400_000, year: 365 * 86400_000 };
+  const max = limits[range];
+  if (!max) return posts;
+  return posts.filter((p) => now - new Date(p.createdAt).getTime() <= max);
+}
+
 export const api = {
   // ── users ─────────────────────────────────────────
   async getUser(name) {
     const { users } = await load("users");
     const idx = indexFor("users", users, "name");
     return delay(idx.get(String(name).replace(/^u\//, "").toLowerCase()) || null);
+  },
+  async searchUsers(prefix) {
+    const { users } = await load("users");
+    const p = String(prefix || "").toLowerCase();
+    return delay(users.filter((u) => u.name.toLowerCase().includes(p)).slice(0, 20));
   },
 
   // ── subreddits ────────────────────────────────────
@@ -65,9 +81,21 @@ export const api = {
     const idx = indexFor("subreddits", subreddits, "name");
     return delay(idx.get(String(name).replace(/^r\//, "").toLowerCase()) || null);
   },
-  async popularSubreddits(n = 5) {
+  async popularSubreddits(n = 15) {
     const { subreddits } = await load("subreddits");
     return delay(subreddits.slice(0, n));
+  },
+  async searchSubreddits(prefix) {
+    const { subreddits } = await load("subreddits");
+    const p = String(prefix || "").toLowerCase();
+    return delay(subreddits.filter((s) => s.name.toLowerCase().includes(p) || s.display.toLowerCase().includes(p)).slice(0, 30));
+  },
+  async relatedSubreddits(name, n = 6) {
+    const { subreddits } = await load("subreddits");
+    const me = subreddits.findIndex((s) => s.name === name);
+    if (me < 0) return delay([]);
+    const sameCategory = subreddits.filter((s) => s.name !== name && s.category === subreddits[me].category);
+    return delay(sameCategory.slice(0, n));
   },
 
   // ── posts ─────────────────────────────────────────
@@ -79,6 +107,11 @@ export const api = {
       const sub = String(opts.subreddit).replace(/^r\//, "").toLowerCase();
       list = list.filter((p) => p.subreddit.toLowerCase() === sub);
     }
+    if (opts.author) {
+      const a = String(opts.author).replace(/^u\//, "").toLowerCase();
+      list = list.filter((p) => (p.author || "").replace(/^u\//, "").toLowerCase() === a);
+    }
+    if (opts.t && opts.t !== "all") list = applyTimeRange(list, opts.t);
     list.sort(sort);
     const offset = opts.offset || 0;
     const limit = opts.limit || 25;
@@ -104,6 +137,21 @@ export const api = {
     );
   },
 
+  async crossPosts(id, n = 3) {
+    const { related } = await load("related");
+    const list = related?.crossposts || [];
+    return delay(list.filter((x) => x.sourcePostId === id).slice(0, n));
+  },
+
+  async relatedById(id, n = 4) {
+    const { related } = await load("related");
+    const map = (related?.related || []).find((r) => r.postId === id);
+    if (!map) return delay([]);
+    const { posts } = await load("posts");
+    const idx = indexFor("posts", posts, "id");
+    return delay(map.relatedPostIds.map((id) => idx.get(id)).filter(Boolean).slice(0, n));
+  },
+
   async searchPosts(q) {
     const { posts } = await load("posts");
     const needle = String(q || "").trim().toLowerCase();
@@ -121,14 +169,31 @@ export const api = {
   // ── comments ───────────────────────────────────────
   async listComments(postId) {
     const { comments } = await load("comments");
-    return delay(comments.filter((c) => c.postId === postId));
+    const direct = comments.comments.filter((c) => c.postId === postId);
+    // include any extra "comments" map (e.g. for more posts)
+    const extras = comments[postId] || [];
+    return delay([...direct, ...extras]);
   },
 
   // ── rules ──────────────────────────────────────────
   async getRules(subredditName) {
     const { rules } = await load("rules");
     const name = String(subredditName).replace(/^r\//, "").toLowerCase();
-    return delay(rules[name] || []);
+    return delay(rules.rules[name] || []);
+  },
+
+  // ── awards / share / report ───────────────────────
+  async listAwards() {
+    const { related } = await load("related");
+    return delay(related?.awards || []);
+  },
+  async listShareTargets() {
+    const { related } = await load("related");
+    return delay(related?.shareTargets || []);
+  },
+  async listReportReasons() {
+    const { related } = await load("related");
+    return delay(related?.reportReasons || []);
   },
 
   // ── combined helpers ──────────────────────────────

@@ -70,6 +70,20 @@ class Router {
     this.noMatchHandler = handler;
   }
 
+  /**
+   * Generate a hash URL for a given path + query.
+   * @param {string} path e.g. "/r/technology/best"
+   * @param {Object} [query] e.g. { sort: "hot", t: "day" }
+   */
+  url(path, query) {
+    if (!query || Object.keys(query).length === 0) return `#${path}`;
+    const qs = Object.entries(query)
+      .filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .join("&");
+    return `#${path}${qs ? "?" + qs : ""}`;
+  }
+
   start() {
     window.addEventListener("hashchange", () => this.resolve());
     this.resolve();

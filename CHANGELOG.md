@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here. Versions follow [SemVer](https://semver.org/).
 
+## v2.0.0 — Major rewrite, real Reddit clone
+
+- 3-column layout: left nav 272px / main 740px / right rail 316px
+- Left navigation rail (new) with 4 sections + collapse state
+- 13 new routes (sort URL routing, user sub-routes, /r/:name/about, etc.)
+- 4-state vote machine (fixed: up+down → down, not none)
+- 3 new modals: award (8 awards + coins), share (8 targets), report (10 reasons)
+- Post dropdown extended: hide / save / subscribe / block user / block sub / report / copy
+- Post detail right sidebar: signup CTA / related posts / about community
+- Subreddit about sub-page with rules, related communities, facts
+- User profile: 6 time ranges, 4 sorts, 6 tabs
+- State extended: blocked, recentlyViewed, drafts, coins, theme, timeRange
+- Mock data: 25 subreddits, 40 posts, 32 comments, 8 awards, 5 cross-posts
+- CSS: 3 new files (~680 lines), full responsive breakpoints
+
 ## v1.0.0 — Polish & Ship
 
 - Empty / error / loading states for every view.

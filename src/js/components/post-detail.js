@@ -1,4 +1,5 @@
-// Post detail page. Composes the post card (full view) + comment tree.
+// Post detail page. Composes the post card (full view) + comment tree +
+// right sidebar (signup CTA / related posts / about community).
 
 import { h, mount } from "../utils/dom.js";
 import { api } from "../api.js";
@@ -9,6 +10,7 @@ import { PostActions } from "./post-actions.js";
 import { Comment } from "./comment.js";
 import { state } from "../state.js";
 import { formatCount, timeAgo } from "../utils/format.js";
+import { DetailRightSidebar } from "./detail-sidebar.js";
 
 const COMMENT_SORTS = [
   { value: "best",           label: "最佳" },
@@ -290,4 +292,29 @@ export async function PostDetail({ postId }) {
   root.appendChild(composer);
 
   return root;
+}
+
+/**
+ * Wrapper that returns both the post-detail body AND the right sidebar,
+ * to be rendered by the router in a two-column layout.
+ */
+export async function PostDetailPage({ postId }) {
+  const post = await api.getPost(postId);
+  if (!post) {
+    return {
+      main: h(
+        "div",
+        { class: "empty-state" },
+        h("div", { class: "empty-state__icon", html: "🕳️" }),
+        h("h3", { class: "empty-state__title" }, "未找到此帖子"),
+        h("p", { class: "empty-state__copy" }, `id = ${postId} 的帖子不存在，或已被删除。`),
+        h("a", { class: "btn btn--secondary", href: "#/" }, "返回首页")
+      ),
+      aside: null,
+    };
+  }
+  return {
+    main: await PostDetail({ postId }),
+    aside: await DetailRightSidebar({ post }),
+  };
 }

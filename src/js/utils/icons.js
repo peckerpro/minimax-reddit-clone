@@ -27,6 +27,23 @@ const ICONS = {
   logout: `<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
   pin: `<path d="M12 17v5M9 10V4h6v6l3 3v2H6v-2l3-3Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
   shield: `<path d="M12 3 4 6v6c0 4.5 3.4 8.5 8 9 4.6-.5 8-4.5 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  home: `<path d="M3 11.5 12 4l9 7.5M5 10v10h5v-6h4v6h5V10" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  fire: `<path d="M12 3s4 4 4 8a4 4 0 0 1-8 0c0-1 .5-2 1-3-1 1-3 3-3 5a6 6 0 1 0 12 0c0-5-6-10-6-10Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  compass: `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m9 15 2-5 5-2-2 5Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  code: `<path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  twitter: `<path d="M18 5h3l-7 8 8 9h-6l-5-5-5 5H3l7-8L3 5h6l4 5 5-5Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  facebook: `<path d="M14 8h2V5h-2a4 4 0 0 0-4 4v2H8v3h2v6h3v-6h2.5l.5-3H13V9c0-.6.4-1 1-1Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  award_gold: `<circle cx="12" cy="9" r="5" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m8 13-2 7 6-3 6 3-2-7" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  eye: `<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="1.5" fill="none"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5" fill="none"/>`,
+  eyeOff: `<path d="m3 3 18 18M10.5 5.2A10 10 0 0 1 22 12a17 17 0 0 1-3.3 4M6.5 6.5C3.5 8.6 2 12 2 12s3.5 7 10 7c1.6 0 3-.3 4.3-.8M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  heart: `<path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 5.5-7 10-7 10Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  laugh: `<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M9 10h.01M15 10h.01M8 14a4 4 0 0 0 8 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>`,
+  bulb: `<path d="M9 18h6m-5 3h4M12 3a6 6 0 0 0-3 11l1 3h4l1-3a6 6 0 0 0-3-11Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  trophy: `<path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM4 4h3v3a3 3 0 0 1-3-3ZM20 4h-3v3a3 3 0 0 0 3-3Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  qr: `<path d="M4 4h6v6H4V4Zm0 10h6v6H4v-6ZM14 4h6v6h-6V4ZM14 14h2v2h-2v-2Zm4 0h2v2h-2v-2Zm-4 4h2v2h-2v-2Zm0 4h6v-2h-2v2h-2v-2h-2v2Zm6-2h-2v-2h2v2Z" stroke="currentColor" stroke-width="1.5" fill="none"/>`,
+  copy: `<rect x="8" y="8" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" stroke="currentColor" stroke-width="1.5" fill="none"/>`,
+  filter: `<path d="M3 5h18l-7 9v6l-4-2v-4L3 5Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`,
+  searchX: `<circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="m21 21-5-5M8 8l6 6M14 8l-6 6" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/>`,
 };
 
 /**

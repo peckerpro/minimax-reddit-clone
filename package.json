@@ -1,6 +1,6 @@
 {
   "name": "minimax-reddit-clone",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "A high-fidelity front-end clone of Reddit (https://www.reddit.com/) built as an engineering project with comprehensive mock data and version-controlled releases.",
   "private": true,
   "type": "module",

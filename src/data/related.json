@@ -1,0 +1,136 @@
+{
+  "related": [
+    {
+      "postId": "p003",
+      "relatedPostIds": ["p031", "p039", "p040", "p034"]
+    },
+    {
+      "postId": "p001",
+      "relatedPostIds": ["p033", "p035", "p036", "p029"]
+    },
+    {
+      "postId": "p013",
+      "relatedPostIds": ["p022", "p040", "p017", "p012"]
+    },
+    {
+      "postId": "p022",
+      "relatedPostIds": ["p040", "p013", "p036", "p021"]
+    },
+    {
+      "postId": "p014",
+      "relatedPostIds": ["p024", "p037", "p006", "p021"]
+    },
+    {
+      "postId": "p031",
+      "relatedPostIds": ["p003", "p039", "p034", "p006"]
+    },
+    {
+      "postId": "p032",
+      "relatedPostIds": ["p016", "p017", "p014", "p029"]
+    }
+  ],
+  "comments": {
+    "c033": [
+      { "id": "c033", "parentId": null, "author": "u_otto", "body": "After a year on the base M1 I just picked up an M4 Pro mini and the speed difference is honestly not noticeable for daily stuff. The M4 Pro only really wins on sustained export workloads. If you don't edit video for 8 hours a day, save the $400.", "score": 980, "createdAt": "2026-06-01T08:30:00Z", "depth": 0, "awards": 0, "edited": false }
+    ],
+    "c034": [
+      { "id": "c034", "parentId": "c033", "author": "u_marvel", "body": "Counter-point: developers running 12 Chrome tabs + Docker + Slack + VSCode will feel the M4 Pro. I went from base to Pro and the difference was about 30% on multi-task workloads.", "score": 320, "createdAt": "2026-06-01T08:45:00Z", "depth": 1, "awards": 1, "edited": false }
+    ],
+    "c035": [
+      { "id": "c035", "parentId": null, "author": "u_yumiko", "body": "I cried at the lighthouse scene. I am not a crier. This movie is something else.", "score": 220, "createdAt": "2026-06-01T06:35:00Z", "depth": 0, "awards": 0, "edited": false }
+    ],
+    "c036": [
+      { "id": "c036", "parentId": null, "author": "u_zenos", "body": "Watched it last weekend. The lighthouse scene alone is a masterclass. The DP is going to sweep.", "score": 880, "createdAt": "2026-06-01T06:20:00Z", "depth": 0, "awards": 2, "edited": false }
+    ],
+    "c037": [
+      { "id": "c037", "parentId": null, "author": "u_luna", "body": "I cannot stop laughing. The fact that 'mystery meat stew' is right next to the actual leftovers is sending me.", "score": 2100, "createdAt": "2026-05-31T22:20:00Z", "depth": 0, "awards": 4, "edited": false }
+    ],
+    "c038": [
+      { "id": "c038", "parentId": "c037", "author": "u_pixel", "body": "The mystery meat stew is, in fact, a leftover. From 2019. I do not recommend.", "score": 540, "createdAt": "2025-05-31T22:35:00Z", "depth": 1, "awards": 0, "edited": false }
+    ],
+    "c039": [
+      { "id": "c039", "parentId": null, "author": "u_ada", "body": "Mine: trying to be the person in the room who knows about everything. Specialization is under-rated.", "score": 1280, "createdAt": "2026-06-01T13:30:00Z", "depth": 0, "awards": 2, "edited": false }
+    ]
+  },
+  "crossposts": [
+    {
+      "id": "x001",
+      "sourcePostId": "p003",
+      "subreddit": "Indiangamers",
+      "title": "Gabe Newell never disappoints",
+      "score": 1065,
+      "comments": 79,
+      "createdAt": "2026-03-02T17:00:00Z"
+    },
+    {
+      "id": "x002",
+      "sourcePostId": "p003",
+      "subreddit": "GamePreservationists",
+      "title": "Valve confirms credit card companies pressured it to delist certain adult games from Steam",
+      "score": 1018,
+      "comments": 146,
+      "createdAt": "2025-05-20T11:00:00Z",
+      "domain": "pcgamer"
+    },
+    {
+      "id": "x003",
+      "sourcePostId": "p003",
+      "subreddit": "GameFeed",
+      "title": "Valve Just Massively Increased The Price Of A Steam Deck",
+      "score": 231,
+      "comments": 152,
+      "createdAt": "2026-05-26T11:00:00Z",
+      "domain": "kotaku"
+    },
+    {
+      "id": "x004",
+      "sourcePostId": "p022",
+      "subreddit": "dogs",
+      "title": "Pit bull ear floof recovery is the best sub-genre of rescue content",
+      "score": 4210,
+      "comments": 312,
+      "createdAt": "2026-05-15T08:00:00Z"
+    },
+    {
+      "id": "x005",
+      "sourcePostId": "p001",
+      "subreddit": "mildlyinfuriating",
+      "title": "Driver stops in the middle of the crosswalk to wave me through",
+      "score": 380,
+      "comments": 41,
+      "createdAt": "2026-05-30T15:00:00Z"
+    }
+  ],
+  "awards": [
+    { "id": "a-upvote",  "name": "Upvote",   "icon": "👍", "price": 0,    "category": "silver",  "description": "Give a little internet kudos." },
+    { "id": "a-heart",   "name": "Heartwarming", "icon": "❤️", "price": 100,  "category": "silver",  "description": "This made me feel things." },
+    { "id": "a-laugh",   "name": "Haha",     "icon": "😂", "price": 100,  "category": "silver",  "description": "Made me laugh out loud." },
+    { "id": "a-helpful", "name": "Helpful",  "icon": "💡", "price": 200,  "category": "silver",  "description": "This saved me time or solved my problem." },
+    { "id": "a-gold",    "name": "Gold",     "icon": "🏆", "price": 500,  "category": "gold",    "description": "Gives the recipient a week of Reddit Premium." },
+    { "id": "a-helper",  "name": "Helper",   "icon": "🛟", "price": 500,  "category": "gold",    "description": "Recognizes helpful people." },
+    { "id": "a-angel",   "name": "Angel",    "icon": "😇", "price": 800,  "category": "gold",    "description": "Wholesome content award." },
+    { "id": "a-platinum","name": "Platinum", "icon": "💎", "price": 1800, "category": "platinum","description": "Premium-only. A month of Premium to the recipient." }
+  ],
+  "shareTargets": [
+    { "id": "copy-link",  "name": "复制链接",     "icon": "link",    "kind": "copy" },
+    { "id": "copy-embed", "name": "复制嵌入代码", "icon": "code",    "kind": "copy" },
+    { "id": "twitter",    "name": "X (Twitter)",  "icon": "twitter", "kind": "external" },
+    { "id": "facebook",   "name": "Facebook",     "icon": "facebook","kind": "external" },
+    { "id": "tumblr",     "name": "Tumblr",       "icon": "share",   "kind": "external" },
+    { "id": "email",      "name": "电子邮件",     "icon": "share",   "kind": "mailto" },
+    { "id": "sms",        "name": "短信",         "icon": "share",   "kind": "sms" },
+    { "id": "qr",         "name": "QR 码",        "icon": "share",   "kind": "qr" }
+  ],
+  "reportReasons": [
+    { "value": "spam",          "name": "垃圾广告" },
+    { "value": "harassment",    "name": "骚扰或人身攻击" },
+    { "value": "hate",          "name": "仇恨言论" },
+    { "value": "violence",      "name": "暴力或血腥内容" },
+    { "value": "sexual",        "name": "色情内容" },
+    { "value": "minor",         "name": "涉及未成年人" },
+    { "value": "copyright",     "name": "侵犯版权" },
+    { "value": "impersonation", "name": "冒充他人" },
+    { "value": "dox",           "name": "泄露隐私" },
+    { "value": "other",         "name": "其他" }
+  ]
+}
