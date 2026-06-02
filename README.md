@@ -10,8 +10,8 @@ A high-fidelity front-end clone of [Reddit](https://www.reddit.com/) built as a 
 ## Highlights
 
 - **Pixel-aware layout** — top-bar, sort-bar, three-column feed, sticky right rail, infinite scroll, modals, dropdowns, hover/focus states.
-- **Full interaction set** — up-vote / down-vote, join community, expand user menu, share, award, sort selector, view toggle, login modal, create-post modal, comment tree (collapse/expand/reply), subreddit rules accordion, hash-based router.
-- **Realistic mock data** — 60+ posts, 30+ subreddits, 200+ comments, several users, rules, awards. Lives under `src/data/` as plain JSON so it's easy to extend.
+- **Full interaction set** — up-vote / down-vote, join community, expand user menu, share, award, sort selector, view toggle, login modal, create-post modal, comment tree (collapse/expand/reply), subreddit rules accordion, hash-based router, 404 page, back-to-top button.
+- **Realistic mock data** — 40 posts, 25 subreddits, 32 comments, 24 users, full rules for the major communities. Lives under `src/data/` as plain JSON so it's easy to extend.
 - **Zero build step** — pure HTML / ES modules / CSS variables. Open `index.html` over any static server and it works.
 - **Versioned releases** — every milestone is a git tag (`v0.0.0` → `v1.0.0`) so any state is one command away.
 
@@ -41,10 +41,12 @@ minimax-reddit-clone/
 │   │   ├── main.js           # entry, bootstraps router + state
 │   │   ├── router.js         # hash-based router
 │   │   ├── state.js          # in-memory store (subscribers, vote counts, …)
+│   │   ├── auth.js           # mock auth
 │   │   ├── api.js            # mock API (reads from /src/data)
+│   │   ├── shell.js          # AppShell factory
 │   │   ├── components/       # header, sidebar, post-card, modal, …
 │   │   └── utils/            # formatters, dom helpers, icons
-│   ├── data/                 # mock JSON (posts, users, subreddits, comments)
+│   ├── data/                 # mock JSON (posts, users, subreddits, comments, rules)
 │   └── assets/               # inline SVG icons
 ├── scripts/                  # dev server, lint, test runners
 └── docs/

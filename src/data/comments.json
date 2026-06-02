@@ -275,6 +275,114 @@
       "depth": 0,
       "awards": 0,
       "edited": false
+    },
+    {
+      "id": "c024",
+      "postId": "p022",
+      "parentId": "c018",
+      "author": "u_pixel",
+      "body": "The beagle cycle is real. It's basically a support group for people who keep going back for more.",
+      "score": 320,
+      "createdAt": "2026-06-01T13:10:00Z",
+      "depth": 2,
+      "awards": 0,
+      "edited": false
+    },
+    {
+      "id": "c025",
+      "postId": "p031",
+      "parentId": null,
+      "author": "u_helix",
+      "body": "The base M4 is honestly enough for most people. The Pro only matters if you're doing sustained workloads — compiling, video editing, 3D. The marketing around the Pro is doing a lot of work for casual users.",
+      "score": 1240,
+      "createdAt": "2026-06-01T08:30:00Z",
+      "depth": 0,
+      "awards": 3,
+      "edited": false
+    },
+    {
+      "id": "c026",
+      "postId": "p031",
+      "parentId": "c025",
+      "author": "u_marvel",
+      "body": "This. The 'Pro' tax is real and the marginal benefit for 80% of buyers is < $100 of value.",
+      "score": 410,
+      "createdAt": "2026-06-01T08:45:00Z",
+      "depth": 1,
+      "awards": 1,
+      "edited": false
+    },
+    {
+      "id": "c027",
+      "postId": "p032",
+      "parentId": null,
+      "author": "u_zenos",
+      "body": "Watched it last weekend. The lighthouse scene alone is a masterclass. The DP is going to sweep.",
+      "score": 880,
+      "createdAt": "2026-06-01T06:20:00Z",
+      "depth": 0,
+      "awards": 2,
+      "edited": false
+    },
+    {
+      "id": "c028",
+      "postId": "p032",
+      "parentId": "c027",
+      "author": "u_yumiko",
+      "body": "I cried at the lighthouse scene. I am not a crier. This movie is something else.",
+      "score": 220,
+      "createdAt": "2026-06-01T06:35:00Z",
+      "depth": 1,
+      "awards": 0,
+      "edited": false
+    },
+    {
+      "id": "c029",
+      "postId": "p035",
+      "parentId": null,
+      "author": "u_luna",
+      "body": "I cannot stop laughing. The fact that 'mystery meat stew' is right next to the actual leftovers is sending me.",
+      "score": 2100,
+      "createdAt": "2026-05-31T22:20:00Z",
+      "depth": 0,
+      "awards": 4,
+      "edited": false
+    },
+    {
+      "id": "c030",
+      "postId": "p035",
+      "parentId": "c029",
+      "author": "u_pixel",
+      "body": "The mystery meat stew is, in fact, a leftover. From 2019. I do not recommend.",
+      "score": 540,
+      "createdAt": "2026-05-31T22:35:00Z",
+      "depth": 1,
+      "awards": 0,
+      "edited": false
+    },
+    {
+      "id": "c031",
+      "postId": "p038",
+      "parentId": null,
+      "author": "u_ada",
+      "body": "Mine: trying to be the person in the room who knows about everything. Specialization is under-rated.",
+      "score": 1280,
+      "createdAt": "2026-06-01T13:30:00Z",
+      "depth": 0,
+      "awards": 2,
+      "edited": false
+    },
+    {
+      "id": "c032",
+      "postId": "p038",
+      "parentId": "c031",
+      "author": "u_otto",
+      "body": "This is the most underrated career advice I have read in years.",
+      "score": 290,
+      "createdAt": "2026-06-01T13:50:00Z",
+      "depth": 1,
+      "awards": 0,
+      "edited": false
     }
   ]
 }

@@ -37,3 +37,46 @@
 .toast--error   { background: #c0392b; }
 
 .toast__msg { line-height: 1.4; }
+
+/* back-to-top button */
+.to-top-host {
+  position: fixed;
+  right: var(--spacer-4);
+  bottom: var(--spacer-4);
+  z-index: 90;
+  pointer-events: none;
+}
+
+.to-top {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--color-bg-card);
+  color: var(--color-text-secondary);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border-subtle);
+  cursor: pointer;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--motion-base), transform var(--motion-base), background var(--motion-fast);
+}
+
+.to-top.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.to-top:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-primary);
+}
+
+.to-top__arrow {
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}

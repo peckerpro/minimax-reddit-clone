@@ -34,6 +34,14 @@
   margin: 0 auto;
 }
 
+.empty-state__actions {
+  display: flex;
+  gap: var(--spacer-2);
+  margin-top: var(--spacer-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 /* search results page */
 .search-results {
   display: flex;

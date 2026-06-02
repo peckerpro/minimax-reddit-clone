@@ -63,6 +63,13 @@ class Router {
     this.routes.push({ pattern, re, keys, handler });
   }
 
+  /**
+   * Register a fallback handler for unmatched paths (404).
+   */
+  setNoMatchHandler(handler) {
+    this.noMatchHandler = handler;
+  }
+
   start() {
     window.addEventListener("hashchange", () => this.resolve());
     this.resolve();
@@ -103,9 +110,17 @@ class Router {
       }
       return;
     }
-    // no match
+    // no match → 404
     this.currentSignal.set({ pattern: null, params: {}, query, path });
-    console.warn(`[router] no route for ${path}`);
+    if (this.noMatchHandler) {
+      try {
+        this.noMatchHandler({ params: {}, query, path });
+      } catch (err) {
+        console.error("[router] noMatch handler threw:", err);
+      }
+    } else {
+      console.warn(`[router] no route for ${path}`);
+    }
   }
 
   get current() {
