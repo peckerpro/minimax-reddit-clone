@@ -1,0 +1,108 @@
+/* Hamburger drawer — slides in from the left. */
+
+.body--no-scroll {
+  overflow: hidden;
+}
+
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--color-bg-overlay);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity var(--motion-base);
+}
+
+.drawer-overlay--in {
+  opacity: 1;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: min(360px, 92vw);
+  background: var(--color-bg-card);
+  z-index: 110;
+  transform: translateX(-100%);
+  transition: transform var(--motion-slow);
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.drawer--in {
+  transform: translateX(0);
+}
+
+.drawer__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacer-3) var(--spacer-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.drawer__title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+}
+
+.drawer__logo {
+  display: inline-flex;
+  color: var(--color-brand-orange);
+}
+
+.drawer__profile {
+  padding: var(--spacer-4);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.drawer__profile-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-3);
+}
+
+.drawer__sub {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.drawer__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacer-2);
+}
+
+.drawer__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-3);
+  padding: var(--spacer-3) var(--spacer-4);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition: background var(--motion-fast);
+}
+
+.drawer__item:hover {
+  background: var(--color-bg-subtle);
+  text-decoration: none;
+}
+
+.drawer__item-icon {
+  color: var(--color-text-secondary);
+  display: inline-flex;
+}
+
+.drawer__foot {
+  padding: var(--spacer-3) var(--spacer-4);
+  border-top: 1px solid var(--color-border-subtle);
+}

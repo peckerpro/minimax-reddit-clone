@@ -9,4 +9,18 @@
 
 @import url("./variables.css");
 @import url("./reset.css");
-@import url("./boot.css");
+@import url("./shell.css");
+@import url("./header.css");
+@import url("./sort-bar.css");
+@import url("./drawer.css");
+@import url("./dropdown.css");
+@import url("./toast.css");
+/* later versions will append:
+ *   feed.css          (v0.3.0)
+ *   sidebar.css       (v0.2.0)
+ *   post-detail.css   (v0.4.0)
+ *   subreddit.css     (v0.5.0)
+ *   modal.css         (v0.6.0)
+ *   comment.css       (v0.4.0)
+ *   empty.css         (v1.0.0)
+ */

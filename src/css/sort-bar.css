@@ -1,0 +1,144 @@
+/* Sort bar — sits below the header, contains the two select buttons and the
+   view toggle. */
+
+.sortbar {
+  position: sticky;
+  top: var(--layout-header-height);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacer-4);
+  height: var(--layout-sortbar-height);
+  max-width: var(--layout-feed-width);
+  margin: 0 auto;
+  padding: 0 var(--spacer-2);
+  background: transparent;
+}
+
+.sortbar__left,
+.sortbar__right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacer-2);
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 var(--spacer-3);
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-pill);
+  transition: background var(--motion-fast), color var(--motion-fast);
+}
+
+.sort-btn:hover {
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+}
+
+.sort-btn[aria-expanded="true"] {
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.sort-btn__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.sort-btn__value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.sort-btn__icon {
+  display: inline-flex;
+}
+
+.sort-btn__caret {
+  display: inline-flex;
+  margin-left: 2px;
+  color: var(--color-text-muted);
+}
+
+/* dropdown list (rendered into body) */
+.sort-list {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 4px;
+  min-width: 140px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity var(--motion-fast), transform var(--motion-fast);
+  z-index: 60;
+}
+
+.sort-list--open {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sort-list__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  text-align: left;
+  padding: var(--spacer-2) var(--spacer-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+}
+
+.sort-list__item:hover,
+.sort-list__item:focus-visible {
+  background: var(--color-bg-subtle);
+}
+
+.sort-list__item.is-active {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-brand-blue);
+}
+
+.sort-list__check {
+  color: var(--color-brand-blue);
+  font-weight: var(--font-weight-bold);
+}
+
+/* view toggle */
+.view-toggle {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-subtle);
+  overflow: hidden;
+}
+
+.view-toggle__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 100%;
+  color: var(--color-text-muted);
+  transition: color var(--motion-fast), background var(--motion-fast);
+}
+
+.view-toggle__btn[aria-pressed="true"] {
+  color: var(--color-brand-blue);
+  background: var(--color-brand-blue-soft);
+}
