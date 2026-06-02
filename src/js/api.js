@@ -5,6 +5,7 @@
 import subreddits from "../data/subreddits.json" with { type: "json" };
 import posts      from "../data/posts.json"      with { type: "json" };
 import users      from "../data/users.json"      with { type: "json" };
+import comments   from "../data/comments.json"   with { type: "json" };
 
 const NETWORK_DELAY_MS = 60;
 
@@ -82,6 +83,15 @@ export const api = {
   /** @returns {Promise<object|null>} */
   async getPost(id) {
     return delay(postIndex.get(id) || null);
+  },
+
+  // ── comments ───────────────────────────────────────
+  /**
+   * @param {string} postId
+   * @returns {Promise<object[]>}
+   */
+  async listComments(postId) {
+    return delay(comments.comments.filter((c) => c.postId === postId));
   },
 
   /**

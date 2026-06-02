@@ -17,10 +17,10 @@
 @import url("./toast.css");
 @import url("./sidebar.css");
 @import url("./feed.css");
+@import url("./post-detail.css");
+@import url("./comment.css");
+@import url("./empty.css");
 /* later versions will append:
- *   post-detail.css   (v0.4.0)
  *   subreddit.css     (v0.5.0)
  *   modal.css         (v0.6.0)
- *   comment.css       (v0.4.0)
- *   empty.css         (v1.0.0)
  */
