@@ -2,7 +2,7 @@
 // Wires the hamburger to the drawer and exposes a `setView(name, ...)` API
 // for the router.
 
-import { h, mount } from "../utils/dom.js";
+import { h, mount } from "./utils/dom.js";
 import { Header } from "./components/header.js";
 import { SortBar } from "./components/sort-bar.js";
 import { openDrawer } from "./components/drawer.js";
