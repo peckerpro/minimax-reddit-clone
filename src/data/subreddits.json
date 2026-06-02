@@ -1,0 +1,29 @@
+{
+  "subreddits": [
+    { "name": "AskMen",            "display": "r/AskMen",            "members": 7272447, "iconText": "AM",  "color": "#ff4500", "description": "Manly advice from men to other men.",                  "nsfw": false },
+    { "name": "AskWomen",          "display": "r/AskWomen",          "members": 5699532, "iconText": "AW",  "color": "#ff5e9c", "description": "Advice and discussion about women.",                  "nsfw": false },
+    { "name": "PS4",               "display": "r/PS4",               "members": 5525569, "iconText": "PS",  "color": "#0070d1", "description": "The largest PlayStation 4 community on the internet.",  "nsfw": false },
+    { "name": "apple",             "display": "r/apple",             "members": 6369449, "iconText": "",    "color": "#1d1d1f", "description": "An unofficial community for Apple users.",            "nsfw": false },
+    { "name": "NBA2k",             "display": "r/NBA2k",             "members":  764528, "iconText": "2K",  "color": "#c8102e", "description": "Reddit's home for NBA 2K.",                           "nsfw": false },
+    { "name": "technology",        "display": "r/technology",        "members": 18000000, "iconText": "T",  "color": "#46d160", "description": "Subreddit dedicated to the news and discussions about the creation and use of technology and its surrounding issues.", "nsfw": false },
+    { "name": "pics",              "display": "r/pics",              "members": 31000000, "iconText": "P",  "color": "#ff8717", "description": "A place to share photographs and pictures.",            "nsfw": false },
+    { "name": "funny",             "display": "r/funny",             "members": 35000000, "iconText": "F",  "color": "#ffd635", "description": "Welcome to r/Funny: the internet's comedy capital.",   "nsfw": false },
+    { "name": "gaming",            "display": "r/gaming",            "members": 38000000, "iconText": "G",  "color": "#a02cd2", "description": "A subreddit for (almost) anything related to games.",  "nsfw": false },
+    { "name": "worldnews",         "display": "r/worldnews",         "members": 33000000, "iconText": "W",  "color": "#0dd3bb", "description": "A place for major news from around the world.",        "nsfw": false },
+    { "name": "movies",            "display": "r/movies",            "members": 31000000, "iconText": "M",  "color": "#e62e2e", "description": "News &amp; discussion about major motion pictures.",   "nsfw": false },
+    { "name": "Music",             "display": "r/Music",             "members": 32000000, "iconText": "♪",  "color": "#ffb000", "description": "The musical community of the internet.",               "nsfw": false },
+    { "name": "books",             "display": "r/books",             "members": 18000000, "iconText": "B",  "color": "#a06a37", "description": "This is a moderated subreddit for book lovers.",       "nsfw": false },
+    { "name": "science",           "display": "r/science",           "members": 30000000, "iconText": "S",  "color": "#7193ff", "description": "The science community of the internet.",               "nsfw": false },
+    { "name": "space",             "display": "r/space",             "members": 24000000, "iconText": "🚀", "color": "#0b3d91", "description": "Share &amp; discuss informative content on space.",  "nsfw": false },
+    { "name": "sports",            "display": "r/sports",            "members": 30000000, "iconText": "S",  "color": "#ff4500", "description": "Sports news and discussion.",                          "nsfw": false },
+    { "name": "food",              "display": "r/food",              "members": 23000000, "iconText": "🍔", "color": "#e67e22", "description": "Cooking, restaurants, recipes, food news, &amp; more.","nsfw": false },
+    { "name": "EarthPorn",         "display": "r/EarthPorn",         "members": 22000000, "iconText": "🌍", "color": "#1f6f3a", "description": "Earth is beautiful.",                                  "nsfw": false },
+    { "name": "gifs",              "display": "r/gifs",              "members": 21000000, "iconText": "G",  "color": "#d93b3b", "description": "Reddit's largest giffy community.",                    "nsfw": false },
+    { "name": "aww",               "display": "r/aww",               "members": 35000000, "iconText": "🐾", "color": "#ffb6c1", "description": "Things that make you go AWW.",                         "nsfw": false },
+    { "name": "mildlyinfuriating", "display": "r/mildlyinfuriating", "members":  6500000, "iconText": "M",  "color": "#ff8c00", "description": "It's mild. It's infuriating.",                         "nsfw": false },
+    { "name": "HistoryMemes",      "display": "r/HistoryMemes",      "members":  3000000, "iconText": "H",  "color": "#a0522d", "description": "History + memes = HistoryMemes.",                      "nsfw": false },
+    { "name": "ProgrammerHumor",   "display": "r/ProgrammerHumor",   "members":  4000000, "iconText": "{ }","color": "#2c3e50", "description": "Fun for the coders out there.",                        "nsfw": false },
+    { "name": "webdev",            "display": "r/webdev",            "members":  3000000, "iconText": "W",  "color": "#0079d3", "description": "A community for web developers.",                      "nsfw": false },
+    { "name": "javascript",        "display": "r/javascript",        "members":  2500000, "iconText": "JS", "color": "#f7df1e", "description": "All about the JavaScript programming language.",        "nsfw": false }
+  ]
+}
