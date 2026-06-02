@@ -11,6 +11,7 @@ import { state } from "./state.js";
 export function AppShell() {
   const main = h("main", { class: "main", id: "main-content", tabindex: "-1" });
   const aside = h("aside", { class: "rail", id: "rail" });
+  const sortbar = SortBar();
   const footer = h(
     "footer",
     { class: "footer" },
@@ -29,7 +30,7 @@ export function AppShell() {
     "div",
     { class: "shell" },
     Header({ onHamburger: openDrawer }),
-    SortBar(),
+    sortbar,
     h(
       "div",
       { class: "shell__body" },
@@ -43,5 +44,8 @@ export function AppShell() {
     root,
     setMain: (node) => mount(main, node),
     setAside: (node) => mount(aside, node || h("span")),
+    setSortbarVisible: (v) => {
+      sortbar.style.display = v ? "" : "none";
+    },
   };
 }

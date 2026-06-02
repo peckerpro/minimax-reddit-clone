@@ -1,0 +1,84 @@
+{
+  "rules": {
+    "technology": [
+      { "n": 1, "title": "Submissions must be about technology",                  "description": "Submissions must be directly about technology. Tangential discussions are off-topic." },
+      { "n": 2, "title": "No images, audio, or video",                           "description": "No images, audio, or video — please link the source article." },
+      { "n": 3, "title": "Titles must be taken directly from the article",        "description": "Editorialised or clickbait titles will be removed." },
+      { "n": 4, "title": "No technical support or help questions",                "description": "Head to r/techsupport for those." },
+      { "n": 5, "title": "No petitions, surveys, or crowdfunding",                "description": "These are not allowed on r/technology." },
+      { "n": 6, "title": "No customer support or feedback",                       "description": "Please contact the company directly." },
+      { "n": 7, "title": "No directed abusive language",                          "description": "Be civil, even when you disagree." },
+      { "n": 8, "title": "Reposts",                                              "description": "Check the new queue before posting." },
+      { "n": 9, "title": "No Spam",                                               "description": "Don't spam the subreddit with affiliate links or self-promotion." }
+    ],
+    "pics": [
+      { "n": 1, "title": "Direct links to images only",                           "description": "No albums, no imgur galleries, no YouTube links." },
+      { "n": 2, "title": "No NSFW",                                                "description": "Mark NSFW content appropriately or it will be removed." },
+      { "n": 3, "title": "Include a descriptive title",                            "description": "Titles should describe the image, not editorialize." }
+    ],
+    "funny": [
+      { "n": 1, "title": "Funny",                                                   "description": "Posts should make you laugh." },
+      { "n": 2, "title": "Don't be rude",                                           "description": "If a joke falls flat, leave it alone." }
+    ],
+    "gaming": [
+      { "n": 1, "title": "No personal ads / affiliate links",                       "description": "Affiliate links will be removed." },
+      { "n": 2, "title": "No memes, circlejerk, or low-effort posts",               "description": "Head to r/gamingmemes for that." }
+    ],
+    "worldnews": [
+      { "n": 1, "title": "News only",                                               "description": "No opinion pieces, no editorials, no blog posts." },
+      { "n": 2, "title": "Recent",                                                  "description": "Events must have happened within the last 7 days." }
+    ],
+    "movies": [
+      { "n": 1, "title": "News & discussion about major motion pictures",           "description": "Trailers, reviews, box office, casting." },
+      { "n": 2, "title": "No spoilers in titles",                                   "description": "Use the spoiler tag in the body of the post." }
+    ],
+    "Music": [
+      { "n": 1, "title": "No memes, no reaction gifs",                              "description": "Head to r/musicmemes for that." },
+      { "n": 2, "title": "Original music welcome",                                  "description": "Tag with [Original] in the title." }
+    ],
+    "books": [
+      { "n": 1, "title": "Tag spoilers",                                            "description": "Use the spoiler tag in the body of the post." },
+      { "n": 2, "title": "Discussion is encouraged",                                "description": "We are a community of book lovers." }
+    ],
+    "science": [
+      { "n": 1, "title": "Submissions must be from peer-reviewed sources",          "description": "Pre-prints are allowed if linked from a credible press release." },
+      { "n": 2, "title": "No editorialised titles",                                 "description": "Use the original paper's title verbatim." }
+    ],
+    "space": [
+      { "n": 1, "title": "Submissions must be about space",                        "description": "Astronomy, astrophysics, planetary science, spaceflight." }
+    ],
+    "sports": [
+      { "n": 1, "title": "Keep it civil",                                           "description": "Ban on personal attacks." }
+    ],
+    "food": [
+      { "n": 1, "title": "Photos must be your own",                                 "description": "Cross-posting from other subs is not allowed." }
+    ],
+    "aww": [
+      { "n": 1, "title": "Cuteness only",                                           "description": "Posts must elicit an aww reaction." }
+    ],
+    "mildlyinfuriating": [
+      { "n": 1, "title": "Keep it mild",                                            "description": "Truly infuriating content belongs in r/infuriating." }
+    ],
+    "HistoryMemes": [
+      { "n": 1, "title": "History + memes only",                                    "description": "No modern political memes." }
+    ],
+    "ProgrammerHumor": [
+      { "n": 1, "title": "Programming humour only",                                 "description": "Tech support questions belong elsewhere." }
+    ],
+    "webdev": [
+      { "n": 1, "title": "Show &amp; tell is welcome",                              "description": "Tag your post with [Show &amp; Tell]." }
+    ],
+    "javascript": [
+      { "n": 1, "title": "JS-specific",                                             "description": "Frameworks go to their own subs (r/reactjs, r/vue, r/angular). Headline news → r/technology." }
+    ],
+    "PS4": [
+      { "n": 1, "title": "PS4 content only",                                        "description": "PS5 content → r/PS5. PS3 content → r/PS3." }
+    ],
+    "AskMen": [
+      { "n": 1, "title": "Men answer here",                                         "description": "If you're a woman, head to r/AskWomen." }
+    ],
+    "AskWomen": [
+      { "n": 1, "title": "Women answer here",                                       "description": "If you're a man, head to r/AskMen." }
+    ]
+  }
+}

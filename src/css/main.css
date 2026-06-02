@@ -20,7 +20,7 @@
 @import url("./post-detail.css");
 @import url("./comment.css");
 @import url("./empty.css");
+@import url("./subreddit.css");
 /* later versions will append:
- *   subreddit.css     (v0.5.0)
  *   modal.css         (v0.6.0)
  */

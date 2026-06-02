@@ -6,6 +6,7 @@ import subreddits from "../data/subreddits.json" with { type: "json" };
 import posts      from "../data/posts.json"      with { type: "json" };
 import users      from "../data/users.json"      with { type: "json" };
 import comments   from "../data/comments.json"   with { type: "json" };
+import rules      from "../data/rules.json"      with { type: "json" };
 
 const NETWORK_DELAY_MS = 60;
 
@@ -57,6 +58,16 @@ export const api = {
   },
   async popularSubreddits(n = 5) {
     return delay(subreddits.subreddits.slice(0, n));
+  },
+
+  // ── rules ──────────────────────────────────────────
+  /**
+   * @param {string} subredditName
+   * @returns {Promise<Array<{n:number,title:string,description:string}>>}
+   */
+  async getRules(subredditName) {
+    const name = String(subredditName).replace(/^r\//, "").toLowerCase();
+    return delay(rules.rules[name] || []);
   },
 
   // ── posts ─────────────────────────────────────────
