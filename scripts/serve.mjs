@@ -1,7 +1,6 @@
 // Minimal zero-dependency static dev server.
 // Run: node scripts/serve.mjs [port]
 import { createServer as createHttpServer } from "node:http";
-import { createServer as createNetServer } from "node:net";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -81,25 +80,35 @@ const server = createHttpServer(async (req, res) => {
   }
 });
 
-// Find a free port. Tries PREFERRED_PORT first, then +1, +2, ... up to
-// +79. Logs the chosen port so the user can copy it from the terminal.
-function tryListen(port) {
-  return new Promise((res) => {
-    const tester = createNetServer();
-    tester.once("error", () => res(null));
-    tester.once("listening", () => tester.close(() => res(port)));
-    tester.listen(port, "0.0.0.0");
+// Find a free port by listening on the main server and retrying on EADDRINUSE.
+// Avoids the TOCTOU race of a "tester" server (close() then re-listen on the
+// same port) which can race on Windows where port release has a small delay.
+function listenWithRetry(srv, port, attempt = 0) {
+  return new Promise((resolve, reject) => {
+    const onError = (err) => {
+      srv.removeListener("listening", onListening);
+      if (err && err.code === "EADDRINUSE" && attempt < 80) {
+        // try next port
+        listenWithRetry(srv, port + 1, attempt + 1).then(resolve, reject);
+      } else {
+        reject(err || new Error(`could not bind a port in [${PREFERRED_PORT}, ${PREFERRED_PORT + 80})`));
+      }
+    };
+    const onListening = () => {
+      srv.removeListener("error", onError);
+      resolve(port);
+    };
+    srv.once("error", onError);
+    srv.once("listening", onListening);
+    srv.listen(port, "0.0.0.0");
   });
 }
 
-async function findPort() {
-  for (let p = PREFERRED_PORT; p < PREFERRED_PORT + 80; p++) {
-    if (await tryListen(p)) return p;
-  }
-  throw new Error("could not find a free port in range");
-}
-
-const PORT = await findPort();
-server.listen(PORT, () => {
-  console.log(`[reddit-clone] dev server  →  http://localhost:${PORT}`);
-});
+listenWithRetry(server, PREFERRED_PORT)
+  .then((port) => {
+    console.log(`[reddit-clone] dev server  →  http://localhost:${port}`);
+  })
+  .catch((err) => {
+    console.error(`[reddit-clone] failed to bind any port: ${err.message}`);
+    process.exit(1);
+  });

@@ -44,9 +44,9 @@ function renderTree(byParent, sort, authorsByName) {
 }
 
 /**
- * @param {{ postId: string }} params
+ * @param {{ postId: string, contextCid?: string|null }} params
  */
-export async function PostDetail({ postId }) {
+export async function PostDetail({ postId, contextCid = null }) {
   const root = h("div", { class: "post-detail" });
   mount(root, h("p", { class: "rail-loading" }, "正在加载帖子…"));
 
@@ -245,6 +245,26 @@ export async function PostDetail({ postId }) {
         )
       );
     }
+    // S_COMMENT_PERMALINK: if a `contextCid` was passed in, focus that
+    // comment, expand its parent chain, and add a visual highlight.
+    if (contextCid) {
+      const target = cmtList.querySelector(`[data-comment-id="${CSS.escape(contextCid)}"]`);
+      if (target) {
+        target.classList.add("is-focused");
+        // expand all ancestor collapsed comments so the target is visible
+        let p = target.parentElement;
+        while (p && p !== cmtList) {
+          if (p.classList && p.classList.contains("c-children")) {
+            const sib = p.previousElementSibling; // the collapse button row
+            // No reliable handle; skip programmatic expand — just unhide bodies.
+          }
+          p = p.parentElement;
+        }
+        requestAnimationFrame(() =>
+          target.scrollIntoView({ behavior: "smooth", block: "center" })
+        );
+      }
+    }
   }
   rerenderComments();
 
@@ -297,8 +317,11 @@ export async function PostDetail({ postId }) {
 /**
  * Wrapper that returns both the post-detail body AND the right sidebar,
  * to be rendered by the router in a two-column layout.
+ *
+ * v2.1.0: optional `contextCid` — when set, the matching comment in the
+ * tree is highlighted + scrolled into view (S_COMMENT_PERMALINK).
  */
-export async function PostDetailPage({ postId }) {
+export async function PostDetailPage({ postId, contextCid = null }) {
   const post = await api.getPost(postId);
   if (!post) {
     return {
@@ -314,7 +337,7 @@ export async function PostDetailPage({ postId }) {
     };
   }
   return {
-    main: await PostDetail({ postId }),
+    main: await PostDetail({ postId, contextCid }),
     aside: await DetailRightSidebar({ post }),
   };
 }

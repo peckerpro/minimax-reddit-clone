@@ -98,8 +98,30 @@ are regression fixes. Minor versions (vX.Y.0) ship features.
 - `src/data/related.json` — multi-purpose: cross-posts, awards, share
   targets, report reasons, related-posts map. Don't split into multiple
   files just for cleanliness — it's a "domain knowledge" file.
-- `docs/analysis/STATE_MACHINE.md` — the v2.0.0 FSM. Update it when
-  you add a new state or transition.
+- `docs/analysis/STATE_MACHINE.md` — the canonical FSM. **v2.1.0**: 30
+  states with full implementation (no more toast-stub placeholders).
+  Every `router.add(...)` in `src/js/main.js` is annotated with a
+  `// State: S_xxx` line on the previous line; do a
+  `grep -nE "// State: S_" src/js/main.js` to map the route table to the
+  FSM one-to-one. When you add a state, append a row to the symbol table
+  in `STATE_MACHINE.md` and add a comment to the matching `router.add`.
+
+### v2.1.0 silent-failure trap (read this before touching `main.js`)
+
+The `/r/:name` route used to do this:
+
+```js
+// ❌ WRONG — main.js:76 in v2.0.x
+const result = await SubredditPage({ name: location.pathname.split("/r/")[1].split("/")[0] });
+```
+
+This is a **hash router**, so `location.pathname` is always `/` (the
+served `index.html`). The expression evaluates to `undefined.split(...)`
+→ `TypeError`. The error was swallowed by `runRoute()` and the user just
+saw the home content where the subreddit should be. Always use
+`params.name` from the route handler. The same fix applies to any
+similar look-the-URL-up-manually code: read from `params`, not from
+`location`.
 
 ## What's NOT in scope
 

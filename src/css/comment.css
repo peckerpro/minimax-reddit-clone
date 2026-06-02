@@ -166,3 +166,12 @@
   font-size: var(--font-size-xs);
   min-width: 24px;
 }
+
+/* S_COMMENT_PERMALINK highlight (v2.1.0) */
+.comment.is-focused {
+  background: rgba(255, 69, 0, 0.06);
+  border-left: 3px solid #ff4500;
+  padding-left: var(--spacer-2);
+  border-radius: 4px;
+  scroll-margin-top: 80px;
+}

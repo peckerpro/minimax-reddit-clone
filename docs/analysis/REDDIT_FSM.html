@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>Reddit 前端状态转换图（FSM）</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+         max-width: 1100px; margin: 24px auto; padding: 0 24px; color: #1a1a1a; }
+  h1 { border-bottom: 2px solid #ff4500; padding-bottom: 8px; }
+  h2 { margin-top: 36px; color: #ff4500; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14px; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; vertical-align: top; text-align: left; }
+  th { background: #f6f6f6; }
+  code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 13px; }
+  .legend { font-size: 12px; color: #666; }
+  .mermaid { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 16px; margin: 12px 0; }
+  .note { background: #fff8e1; border-left: 4px solid #ffb300; padding: 8px 12px; margin: 12px 0; }
+</style>
+</head>
+<body>
+
+<h1>Reddit 前端状态转换图（FSM）</h1>
+
+<p>目标：<code>https://www.reddit.com/</code>（未登录访客视角）&nbsp;·&nbsp;
+采集：Playwright 真实点击 + accessibility snapshot&nbsp;·&nbsp;2026-06-02</p>
+
+<div class="note">
+<b>用户给出的两条主链均已在真实 reddit.com 上验证：</b><br>
+1) Home → Post → Author → User Profile → Submitted tab → 用户的其他帖子<br>
+2) Home → Subreddit → Post → 帖子详情
+</div>
+
+<h2>1. 状态转换图（Mermaid）</h2>
+
+<div class="mermaid">
+flowchart LR
+    classDef core fill:#ffe5d4,stroke:#ff4500,stroke-width:1px,color:#222
+    classDef leaf fill:#e7f3ff,stroke:#1d6fb8,color:#222
+    classDef ext fill:#eee,stroke:#888,color:#555,stroke-dasharray:4 3
+
+    S0["S0 Home Feed<br/>/?feed=home"]:::core
+    S1["S1 Popular<br/>/r/popular/"]:::core
+    S2["S2 News<br/>/news"]:::core
+    S3["S3 Explore<br/>/explore/"]:::core
+    S4["S4 Subreddit<br/>/r/&lt;sub&gt;/"]:::core
+    S4a["S4a Subreddit · Sort<br/>/r/&lt;sub&gt;/&lt;sort&gt;/"]:::core
+    S5["S5 Post Detail<br/>/r/&lt;sub&gt;/comments/&lt;id&gt;/"]:::core
+    S5a["S5a Post · Sorted Comments<br/>?sort=&lt;s&gt;"]:::core
+    S6["S6 Comment Permalink<br/>/comments/&lt;id&gt;/comment/&lt;cid&gt;/?context=N"]:::core
+    S7["S7 User Overview<br/>/user/&lt;name&gt;/"]:::core
+    S8["S8 User Submitted<br/>/user/&lt;name&gt;/submitted/"]:::core
+    S9["S9 User Comments<br/>/user/&lt;name&gt;/comments/"]:::core
+    S10["S10 Search<br/>/search?q=&lt;q&gt;&amp;type=&lt;t&gt;"]:::core
+    S11["S11 Login<br/>/login/"]:::leaf
+    S12["S12 Register<br/>/register/"]:::leaf
+    S13["S13 Submit Post<br/>/submit?community=…"]:::leaf
+    S18["S18 Communities List"]:::leaf
+    EXT["⊥ External<br/>(redditinc/help/CDN)"]:::ext
+
+    S0 -- "r/&lt;sub&gt;" --> S4
+    S0 -- "u/&lt;author&gt;" --> S7
+    S0 -- "帖子卡/标题" --> S5
+    S0 -- "热门社区" --> S4
+    S0 -- "查看更多内容" --> S18
+    S0 -- "搜索框" --> S10
+    S0 -- "登录/注册" --> S11
+    S0 -- "受欢迎/资讯/浏览" --> S1
+    S0 -- "资讯/浏览" --> S2
+    S0 -- "浏览" --> S3
+
+    S4 -- "帖子卡" --> S5
+    S4 -- "排序方式" --> S4a
+    S4a -- "排序方式" --> S4a
+    S4 -- "创建帖子" --> S13
+    S4 -- "搜索框" --> S10
+    S4 -- "主页/受欢迎/资讯/浏览" --> S0
+
+    S5 -- "r/&lt;sub&gt;面包屑" --> S4
+    S5 -- "u/&lt;author&gt;发帖人" --> S7
+    S5 -- "评论作者" --> S7
+    S5 -- "评论 permalink" --> S6
+    S5 -- "评论排序" --> S5a
+    S5 -- "未登录：投票/回复/关注" --> S11
+    S5 -- "顶部 logo" --> S0
+
+    S6 -- "帖子标题" --> S5
+    S6 -- "r/&lt;sub&gt;" --> S4
+    S6 -- "u/&lt;author&gt;" --> S7
+
+    S7 -- "Tab 帖子" --> S8
+    S7 -- "Tab 评论" --> S9
+    S7 -- "Tab 概述" --> S7
+    S8 -- "帖子卡" --> S5
+    S8 -- "Tab 概述/评论" --> S7
+    S8 -- "Tab 概述/评论" --> S9
+    S9 -- "评论 permalink" --> S6
+    S9 -- "所属帖子" --> S5
+    S9 -- "Tab 概述" --> S7
+    S9 -- "Tab 帖子" --> S8
+
+    S10 -- "命中: 帖子" --> S5
+    S10 -- "命中: r/&lt;sub&gt;" --> S4
+    S10 -- "命中: u/&lt;name&gt;" --> S7
+    S10 -- "命中: 评论" --> S6
+
+    S11 -- "登录成功 → referrer" --> S0
+    S13 -- "提交 → 新帖" --> S5
+    S18 -- "社区卡" --> S4
+    S5 -- "外链/广告" --> EXT
+    S0 -- "Reddit 规则/隐私…" --> EXT
+</div>
+
+<p class="legend">橙色 = 核心页面状态 · 蓝色 = 叶子状态（多为表单/业务页）· 灰色 = 外部吸收态。
+为节省版面，S1/S2/S3 与 S0 同构的边未全部展开；所有 S 都可经顶部导航互达。</p>
+
+<h2>2. 用户给的主链（高亮）</h2>
+
+<div class="mermaid">
+flowchart LR
+    S0["S0 Home"]:::core -->|点击帖子| S5["S5 Post"]:::core
+    S5 -->|点击作者 u/&lt;author&gt;| S7["S7 User Overview"]:::core
+    S7 -->|Tab 帖子| S8["S8 User Submitted"]:::core
+    S8 -->|点用户别的帖子| S5b["S5 Post (其他帖)"]:::core
+
+    S0 -->|侧栏热门社区| S4["S4 Subreddit"]:::core
+    S4 -->|帖子卡| S5
+
+    classDef core fill:#ffe5d4,stroke:#ff4500,stroke-width:2px,color:#222
+</div>
+
+<p><b>真实点击验证轨迹：</b></p>
+<ol>
+  <li><code>https://www.reddit.com/</code>（Home）</li>
+  <li>点击"Bedfordshire Airshow Avro Triplane Crash Video" → <code>/r/aviation/comments/1ttsf6o/.../</code>（Post Detail）</li>
+  <li>点击作者 <code>u/Shoddy_Act7059</code> → <code>/user/Shoddy_Act7059/</code>（User Overview）</li>
+  <li>点击 Tab "帖子" → <code>/user/Shoddy_Act7059/submitted/</code>（User Submitted）</li>
+  <li>点击"On April 11, 1996, Jessica Dubroff..." → <code>/r/aviation/comments/1sijyep/.../</code>（Post Detail，另一个帖子）</li>
+</ol>
+
+<h2>3. 全部状态清单（22 个 S + ⊥）</h2>
+
+<table>
+  <tr><th>#</th><th>名称</th><th>URL 模板</th><th>触发入口</th></tr>
+  <tr><td>S0</td><td>Home Feed</td><td><code>/?feed=home</code></td><td>顶部 logo / 主页 / 任何站内的 logo</td></tr>
+  <tr><td>S1</td><td>Popular</td><td><code>/r/popular/</code></td><td>顶部 受欢迎</td></tr>
+  <tr><td>S2</td><td>News</td><td><code>/news</code></td><td>顶部 资讯</td></tr>
+  <tr><td>S3</td><td>Explore</td><td><code>/explore/</code></td><td>顶部 浏览</td></tr>
+  <tr><td>S4</td><td>Subreddit</td><td><code>/r/&lt;sub&gt;/</code></td><td>帖子 meta、侧栏热门社区、搜索命中</td></tr>
+  <tr><td>S4a</td><td>Subreddit · Sort</td><td><code>/r/&lt;sub&gt;/&lt;sort&gt;/?t=…</code></td><td>排序方式下拉</td></tr>
+  <tr><td>S5</td><td>Post Detail</td><td><code>/r/&lt;sub&gt;/comments/&lt;id&gt;/&lt;slug&gt;/</code></td><td>任何帖子卡 / 标题 / "N 转到评论"</td></tr>
+  <tr><td>S5a</td><td>Post · Sorted Comments</td><td><code>…?sort=&lt;s&gt;</code></td><td>评论排序</td></tr>
+  <tr><td>S6</td><td>Comment Permalink</td><td><code>/comments/&lt;id&gt;/comment/&lt;cid&gt;/?context=N</code></td><td>评论 permalink / 时间戳</td></tr>
+  <tr><td>S7</td><td>User Overview</td><td><code>/user/&lt;name&gt;/</code></td><td>任何 <code>u/&lt;name&gt;</code> 链接</td></tr>
+  <tr><td>S8</td><td>User Submitted</td><td><code>/user/&lt;name&gt;/submitted/</code></td><td>用户页 Tab 帖子</td></tr>
+  <tr><td>S9</td><td>User Comments</td><td><code>/user/&lt;name&gt;/comments/</code></td><td>用户页 Tab 评论</td></tr>
+  <tr><td>S10</td><td>Search</td><td><code>/search?q=&lt;q&gt;&amp;type=&lt;t&gt;</code></td><td>搜索框 + 回车</td></tr>
+  <tr><td>S11</td><td>Login</td><td><code>/login/</code></td><td>未登录时所有写操作（投票/回复/关注/加入/举报/创建帖子）</td></tr>
+  <tr><td>S12</td><td>Register</td><td><code>/register/</code></td><td>顶部 注册 / S11 链接</td></tr>
+  <tr><td>S13</td><td>Submit Post</td><td><code>/submit?community=r/&lt;sub&gt;</code></td><td>子社区 创建帖子（未登录 → S11）</td></tr>
+  <tr><td>S14</td><td>Notifications</td><td><code>/notifications</code></td><td>仅登录后铃铛</td></tr>
+  <tr><td>S15</td><td>Inbox</td><td><code>/message/inbox</code></td><td>仅登录后收件箱</td></tr>
+  <tr><td>S16</td><td>Compose Message</td><td><code>/message/compose?to=&lt;u&gt;</code></td><td>用户页 私信 / S15 新建</td></tr>
+  <tr><td>S17</td><td>Settings</td><td><code>/settings</code></td><td>仅登录后头像菜单</td></tr>
+  <tr><td>S18</td><td>Communities List</td><td>（侧栏"查看更多内容"触发）</td><td>Home / Popular 侧栏</td></tr>
+  <tr><td>S19</td><td>Premium</td><td><code>/premium</code></td><td>资源折叠 → Premium</td></tr>
+  <tr><td>S20</td><td>Reddit Pro</td><td><code>/reddit-pro</code></td><td>资源折叠 → Reddit Pro</td></tr>
+  <tr><td>⊥</td><td>External</td><td>redditinc.com / reddithelp.com / oauth.reddit.com / v.redd.it / i.redd.it / alb.reddit.com</td><td>外链、广告、政策页、媒体 CDN</td></tr>
+</table>
+
+<p>完整状态 × 事件 → 目标状态表见
+<code>docs/analysis/REDDIT_FSM.md</code>（§3）。</p>
+
+</body>
+</html>

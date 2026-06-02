@@ -8,6 +8,7 @@ import { formatCount, timeAgo } from "../utils/format.js";
 import { icon } from "../utils/icons.js";
 import { PostCard } from "./post-card.js";
 import { dropdown } from "./dropdown.js";
+import { toast } from "./toast.js";
 
 const SORTS = [
   { value: "hot",  label: "热门" },

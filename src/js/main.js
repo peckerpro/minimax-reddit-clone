@@ -1,4 +1,9 @@
 // Entry point — bootstraps the SPA and wires the router.
+//
+// State IDs (S_xxx) refer to the FSM documented in
+// docs/analysis/STATE_MACHINE.md (v2.1.0). Each route is annotated with its
+// target state ID so a one-shot grep maps routes ↔ FSM states:
+//   grep -nE "// State: S_" src/js/main.js
 
 import { mount } from "./utils/dom.js";
 import { AppShell } from "./shell.js";
@@ -11,7 +16,7 @@ import { router } from "./router.js";
 import { state } from "./state.js";
 import { toast } from "./components/toast.js";
 
-console.info(`[reddit-clone] v2.0.0 — major rewrite, 3-column layout, real interactions`);
+console.info(`[reddit-clone] v2.1.0 — FSM-aligned routes, real News/Explore/Reddit Pro/Compose, comment permalinks`);
 
 const app = document.getElementById("app");
 if (!app) throw new Error("#app not found");
@@ -52,8 +57,14 @@ function applyResult(result) {
 }
 
 // ── routes ─────────────────────────────────────────────
+//
+// Note on URL choices: this clone uses `/u/...` and `/r/...` (no `user/` or
+// `r/<name>/comments/.../.../` slug) which differs from reddit.com. The FSM
+// state semantics are the same — the URLs are a local naming choice kept
+// for backwards-compat with the v2.0.x state-key suffix. See FSM §6.
 
 router.add("/", () =>
+  // State: S_HOME
   runRoute(async () => {
     shell.setSortbarVisible(true);
     shell.setAside(await Sidebar());
@@ -62,6 +73,7 @@ router.add("/", () =>
 );
 
 router.add("/best/", () =>
+  // State: S_BEST
   runRoute(async () => {
     shell.setSortbarVisible(true);
     shell.setAside(await Sidebar());
@@ -70,16 +82,20 @@ router.add("/best/", () =>
   })
 );
 
-router.add("/r/:name", () =>
+router.add("/r/:name", ({ params }) =>
+  // State: S_SUBREDDIT
+  // Fix v2.1.0: was `location.pathname.split("/r/")[1]…` which silently threw
+  // in the hash router (pathname is the static `index.html`, not the route).
   runRoute(async () => {
     const { SubredditPage } = await import("./components/subreddit.js");
-    const result = await SubredditPage({ name: location.pathname.split("/r/")[1].split("/")[0] });
+    const result = await SubredditPage({ name: params.name });
     shell.setSortbarVisible(false);
     return applyResult({ main: result, aside: null });
   })
 );
 
 router.add("/r/:name/:sort", ({ params, query }) =>
+  // State: S_SUBREDDIT_SORTED  (sort ∈ {best, hot, new, top, rising}, timeRange ∈ query.t)
   runRoute(async () => {
     const { SubredditPage } = await import("./components/subreddit.js");
     const result = await SubredditPage({
@@ -93,6 +109,7 @@ router.add("/r/:name/:sort", ({ params, query }) =>
 );
 
 router.add("/r/:name/about", ({ params }) =>
+  // State: S_SUBREDDIT_ABOUT
   runRoute(async () => {
     const { SubredditAboutPage } = await import("./components/subreddit-about.js");
     shell.setSortbarVisible(false);
@@ -100,14 +117,24 @@ router.add("/r/:name/about", ({ params }) =>
   })
 );
 
-router.add("/r/:name/comments/:id", ({ params }) =>
+router.add("/r/:name/comments/:id", ({ params, query }) =>
+  // State: S_POST
+  // ?sort=…        → S_POST_SORTED_COMMENTS
+  // ?context=N&cid → S_COMMENT_PERMALINK  (focus + expand a single comment)
   runRoute(async () => {
     shell.setSortbarVisible(false);
-    return applyResult(await PostDetailPage({ postId: params.id }));
+    if (query.sort) state.setCommentSort(query.sort);
+    return applyResult(
+      await PostDetailPage({
+        postId: params.id,
+        contextCid: query.cid || null,
+      })
+    );
   })
 );
 
 router.add("/u/:name", ({ params, query }) =>
+  // State: S_USER
   runRoute(async () => {
     const { UserPage } = await import("./components/user.js");
     state.setSort(query.sort || "hot");
@@ -118,6 +145,7 @@ router.add("/u/:name", ({ params, query }) =>
 );
 
 router.add("/u/:name/posts", ({ params, query }) =>
+  // State: S_USER_POSTS
   runRoute(async () => {
     const { UserPage } = await import("./components/user.js");
     state.setSort(query.sort || "hot");
@@ -128,6 +156,7 @@ router.add("/u/:name/posts", ({ params, query }) =>
 );
 
 router.add("/u/:name/comments", ({ params, query }) =>
+  // State: S_USER_COMMENTS
   runRoute(async () => {
     const { UserPage } = await import("./components/user.js");
     state.setSort(query.sort || "hot");
@@ -138,6 +167,7 @@ router.add("/u/:name/comments", ({ params, query }) =>
 );
 
 router.add("/u/:name/saved", ({ params, query }) =>
+  // State: S_USER_SAVED
   runRoute(async () => {
     const { UserPage } = await import("./components/user.js");
     state.setSort(query.sort || "hot");
@@ -148,6 +178,7 @@ router.add("/u/:name/saved", ({ params, query }) =>
 );
 
 router.add("/u/:name/hidden", ({ params, query }) =>
+  // State: S_USER_HIDDEN
   runRoute(async () => {
     const { UserPage } = await import("./components/user.js");
     state.setSort(query.sort || "hot");
@@ -158,6 +189,7 @@ router.add("/u/:name/hidden", ({ params, query }) =>
 );
 
 router.add("/u/:name/upvoted", ({ params, query }) =>
+  // State: S_USER_UPVOTED
   runRoute(async () => {
     const { UserPage } = await import("./components/user.js");
     state.setSort(query.sort || "hot");
@@ -168,6 +200,7 @@ router.add("/u/:name/upvoted", ({ params, query }) =>
 );
 
 router.add("/search", ({ query }) =>
+  // State: S_SEARCH
   runRoute(async () => {
     const { SearchPage } = await import("./components/search.js");
     shell.setSortbarVisible(true);
@@ -176,6 +209,7 @@ router.add("/search", ({ query }) =>
 );
 
 router.add("/login", ({ query }) =>
+  // State: S_LOGIN
   runRoute(async () => {
     const { LoginPage } = await import("./components/login.js");
     shell.setSortbarVisible(false);
@@ -184,6 +218,7 @@ router.add("/login", ({ query }) =>
 );
 
 router.add("/register", () =>
+  // State: S_REGISTER
   runRoute(async () => {
     const { LoginPage } = await import("./components/login.js");
     shell.setSortbarVisible(false);
@@ -192,6 +227,7 @@ router.add("/register", () =>
 );
 
 router.add("/submit", () =>
+  // State: S_SUBMIT
   runRoute(async () => {
     const { SubmitPage } = await import("./components/submit.js");
     shell.setSortbarVisible(false);
@@ -200,6 +236,7 @@ router.add("/submit", () =>
 );
 
 router.add("/settings", () =>
+  // State: S_SETTINGS
   runRoute(async () => {
     const { SettingsPage } = await import("./components/settings.js");
     shell.setSortbarVisible(false);
@@ -208,6 +245,7 @@ router.add("/settings", () =>
 );
 
 router.add("/notifications", () =>
+  // State: S_NOTIFICATIONS
   runRoute(async () => {
     const { NotificationsPage } = await import("./components/notifications.js");
     shell.setSortbarVisible(false);
@@ -216,6 +254,7 @@ router.add("/notifications", () =>
 );
 
 router.add("/communities", () =>
+  // State: S_COMMUNITIES
   runRoute(async () => {
     const { CommunitiesPage } = await import("./components/communities.js");
     shell.setSortbarVisible(false);
@@ -224,6 +263,7 @@ router.add("/communities", () =>
 );
 
 router.add("/premium", () =>
+  // State: S_PREMIUM
   runRoute(async () => {
     const { PremiumPage } = await import("./components/premium.js");
     shell.setSortbarVisible(false);
@@ -232,6 +272,7 @@ router.add("/premium", () =>
 );
 
 router.add("/help/:slug", ({ params }) =>
+  // State: S_HELP  (slug = "content-policy" | "privacy-policy" | …)
   runRoute(async () => {
     const { HelpPage } = await import("./components/help.js");
     shell.setSortbarVisible(false);
@@ -240,6 +281,7 @@ router.add("/help/:slug", ({ params }) =>
 );
 
 router.add("/help", () =>
+  // State: S_HELP  (default slug = "help")
   runRoute(async () => {
     const { HelpPage } = await import("./components/help.js");
     shell.setSortbarVisible(false);
@@ -248,6 +290,7 @@ router.add("/help", () =>
 );
 
 router.add("/report", () =>
+  // State: S_REPORT
   runRoute(async () => {
     const { ReportPage } = await import("./components/report.js");
     shell.setSortbarVisible(false);
@@ -255,43 +298,53 @@ router.add("/report", () =>
   })
 );
 
-router.add("/message/compose", () =>
+router.add("/message/compose", ({ query }) =>
+  // State: S_MESSAGE_COMPOSE  (v2.1.0: was a toast + back-to-home stub)
   runRoute(async () => {
-    toast("私信功能尚未实现（mock）", { kind: "info" });
-    location.hash = "#/";
+    const { ComposePage } = await import("./components/compose.js");
+    shell.setSortbarVisible(false);
+    return applyResult(ComposePage({ to: query.to || "" }));
   })
 );
 
 router.add("/news", () =>
+  // State: S_NEWS  (v2.1.0: was a toast + back-to-home stub)
   runRoute(async () => {
-    toast("资讯 tab 暂未实现", { kind: "info" });
-    location.hash = "#/";
+    const { NewsPage } = await import("./components/news.js");
+    shell.setSortbarVisible(true);
+    return applyResult(await NewsPage());
   })
 );
 
 router.add("/explore", () =>
+  // State: S_EXPLORE  (v2.1.0: was a toast + back-to-home stub)
   runRoute(async () => {
-    toast("游览 tab 暂未实现", { kind: "info" });
-    location.hash = "#/";
+    const { ExplorePage } = await import("./components/explore.js");
+    shell.setSortbarVisible(true);
+    return applyResult(await ExplorePage());
   })
 );
 
 router.add("/reddit-pro", () =>
+  // State: S_REDDIT_PRO  (v2.1.0: was a toast + back-to-home stub)
   runRoute(async () => {
-    toast("Reddit Pro 暂未实现", { kind: "info" });
-    location.hash = "#/";
+    const { RedditProPage } = await import("./components/reddit-pro.js");
+    shell.setSortbarVisible(false);
+    return applyResult(RedditProPage());
   })
 );
 
 router.add("/coins", () =>
+  // State: S_COINS  (v2.1.0: reuses PremiumPage but with coins header copy)
   runRoute(async () => {
-    const { PremiumPage } = await import("./components/premium.js");
+    const { CoinsPage } = await import("./components/coins.js");
     shell.setSortbarVisible(false);
-    return applyResult(PremiumPage());
+    return applyResult(CoinsPage());
   })
 );
 
 router.setNoMatchHandler(({ path }) =>
+  // State: S_NOT_FOUND
   runRoute(async () => {
     shell.setSortbarVisible(false);
     return applyResult(NotFoundPage({ path }));

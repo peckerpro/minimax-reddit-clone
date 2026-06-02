@@ -2,6 +2,45 @@
 
 All notable changes to this project are documented here. Versions follow [SemVer](https://semver.org/).
 
+## v2.1.0 — FSM-aligned routes, real News/Explore/Reddit Pro/Compose, comment permalinks
+
+- **Bugfix — `S_SUBREDDIT` was actually broken in v2.0.x.** `main.js:76` did
+  `location.pathname.split("/r/")[1]…` to recover the subreddit name, but
+  this is a hash router — `location.pathname` is always `/`, so the
+  expression was `undefined.split(...)` → silent `TypeError` swallowed by
+  `runRoute()`. The user got the home content where the subreddit
+  should've been. Fixed: use `params.name` from the route handler.
+- **Bugfix — `S_USER` follow button was a `ReferenceError`.** `user.js`
+  called `toast(...)` without importing it. The follow button crashed
+  on click. Fixed.
+- **New states — S_NEWS, S_EXPLORE, S_REDDIT_PRO, S_MESSAGE_COMPOSE,
+  S_COINS** were "click → toast → bounce to home" stubs in v2.0.x. Now
+  real pages: `src/js/components/{news,explore,reddit-pro,compose,coins}.js`.
+  S_NEWS aggregates all subreddits in the `news` category; S_EXPLORE
+  shows interleaved posts across 4 categories with chip filters;
+  S_REDDIT_PRO is a marketing landing for the Pro tier; S_MESSAGE_COMPOSE
+  is a to/subject/body composer with validation; S_COINS is a
+  standalone balance + 4-pack purchase grid.
+- **New state — S_COMMENT_PERMALINK.** `/r/<sub>/comments/<id>?cid=<cid>`
+  highlights + scrolls to a single comment. Implementation:
+  `data-comment-id` attribute on every `.comment` node + a new
+  `.is-focused` CSS class in `comment.css` + `scrollIntoView` in
+  `post-detail.js`'s `rerenderComments()`.
+- **New state — S_POST_SORTED_COMMENTS.** `?sort=<best|top|new|controversial>`
+  on the post URL writes through to `state.commentSort` and the existing
+  comment-sort UI picks it up. Was previously UI-only.
+- **Documentation — FSM is now the source of truth.** Rewrote
+  `docs/analysis/STATE_MACHINE.md` to v2.1.0 (30 states, full transfer
+  matrix, Mermaid diagram, validation recipe). Every `router.add(...)` in
+  `src/js/main.js` is annotated with `// State: S_xxx` on the previous
+  line so a `grep -nE "// State: S_" src/js/main.js` produces the
+  full route↔state cross-reference.
+- **State reference updated.** `AGENTS.md` §Files gained a
+  v2.1.0 silent-failure trap (the `location.pathname.split` bug) so the
+  next person to touch a route doesn't fall into the same pit.
+- **Validation:** `lint` 56/0, `test` 62/0, `walk` 49/0 404, `api-test`
+  25/0 — all green.
+
 ## v2.0.1 — Critical bugfix: listComments / getRules double-destructure
 
 - Fixed `api.listComments` crashing on `comments.comments.filter(...)` (the
