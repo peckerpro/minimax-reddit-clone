@@ -1,0 +1,141 @@
+/* M7: admin / mod queue page + theme toggle button in the header.
+   Light + dark: the colors are all CSS variables so this file
+   needs no [data-theme="dark"] override. */
+
+.header__theme {
+  margin-right: var(--spacer-2);
+  color: var(--color-text-secondary);
+}
+.header__theme:hover {
+  color: var(--color-text-primary);
+}
+
+.admin-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--spacer-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-4);
+}
+.admin-page__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacer-4);
+  flex-wrap: wrap;
+}
+.admin-page__head h1 {
+  font-size: var(--font-size-2xl);
+  margin: 0;
+}
+.admin-page__tabs {
+  display: flex;
+  gap: var(--spacer-1);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-pill);
+  padding: var(--spacer-1);
+}
+.admin-page__tab {
+  border: 0;
+  background: transparent;
+  padding: var(--spacer-2) var(--spacer-4);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  transition: background var(--motion-fast), color var(--motion-fast);
+}
+.admin-page__tab.is-active {
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.admin-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-3);
+}
+.admin-item {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--spacer-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-3);
+  transition: border-color var(--motion-fast);
+}
+.admin-item--loading,
+.admin-item--empty,
+.admin-item--error {
+  text-align: center;
+  color: var(--color-text-secondary);
+  padding: var(--spacer-6);
+  font-size: var(--font-size-md);
+}
+.admin-item--resolved {
+  opacity: 0.6;
+}
+.admin-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+}
+.admin-item__head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacer-2);
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm);
+}
+.admin-item__sep {
+  color: var(--color-text-muted);
+}
+.admin-item__time {
+  margin-left: auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+.admin-item__reason {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+.admin-item__detail {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+.admin-item__resolution {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+.admin-item__actions {
+  display: flex;
+  gap: var(--spacer-2);
+}
+.btn--danger {
+  background: #d93a3a;
+  color: #fff;
+  border-color: #d93a3a;
+}
+.btn--danger:hover {
+  background: #c52d2d;
+  border-color: #c52d2d;
+}
+[data-theme="dark"] .btn--danger,
+[data-theme="dark"] .btn--danger:hover {
+  background: #b22a2a;
+  border-color: #b22a2a;
+}

@@ -43,6 +43,28 @@
   }
 }
 
+/* M7: mobile (< 600px) — header search collapses, main padding shrinks,
+   feed cards stack full-width. No hamburger menu yet (M7 ships a
+   theme toggle in the header; the drawer already exists at < 960px). */
+@media (max-width: 600px) {
+  .header__search {
+    max-width: 220px;
+  }
+  .header__logo-text {
+    display: none;
+  }
+  .header {
+    padding: 0 var(--spacer-2);
+  }
+  .main {
+    padding: var(--spacer-2);
+  }
+  .post-actions__sublabel,
+  .post__meta__domain {
+    display: none;
+  }
+}
+
 .main {
   min-width: 0;
   padding: var(--spacer-4);

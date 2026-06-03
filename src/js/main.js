@@ -12,11 +12,16 @@ import { Feed } from "./components/feed.js";
 import { PostDetailPage } from "./components/post-detail.js";
 import { NotFoundPage } from "./components/not-found.js";
 import { initBackToTop } from "./components/back-to-top.js";
+import { startTheme } from "./utils/theme.js";
 import { router } from "./router.js";
 import { state } from "./state.js";
 import { toast } from "./components/toast.js";
 
-console.info(`[reddit-clone] v2.1.0 — FSM-aligned routes, real News/Explore/Reddit Pro/Compose, comment permalinks`);
+console.info(`[reddit-clone] v3.0.0 — real backend on /api/*, M0–M7 wired`);
+
+// M7: apply state.theme → <html data-theme> before the first render
+// so the user doesn't see a light-mode flash if dark is active.
+startTheme();
 
 const app = document.getElementById("app");
 if (!app) throw new Error("#app not found");
@@ -295,6 +300,17 @@ router.add("/report", () =>
     const { ReportPage } = await import("./components/report.js");
     shell.setSortbarVisible(false);
     return applyResult(ReportPage());
+  })
+);
+
+router.add("/admin", () =>
+  // State: S_ADMIN  (M7) — mod queue. Admin only (the page itself
+  // bounces non-admins back to home; server still 403s on the API
+  // calls, so this is just for UX, not security).
+  runRoute(async () => {
+    const { AdminPage } = await import("./components/admin.js");
+    shell.setSortbarVisible(false);
+    return applyResult(AdminPage());
   })
 );
 

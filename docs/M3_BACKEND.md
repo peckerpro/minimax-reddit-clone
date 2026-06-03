@@ -394,6 +394,79 @@ removed-content filtering in public read APIs, mod-assigned
 notifications (e.g. "your post was removed" notif to the
 offending user). Deferred to M7/M8.
 
+### M7 (polish) — DONE
+
+#### Removed-content filter (the second half of M6's "set the flag" half)
+
+M6's `remove_content` action sets `posts.removed_at` /
+`posts.removed_by` (or comments.*). M7 wires the **read side** so
+those flags actually hide the content from public API consumers:
+
+| Endpoint                                          | Behavior with `removed_at` set |
+| ------------------------------------------------- | ------------------------------ |
+| `GET /api/posts`                                  | removed post NOT in list |
+| `GET /api/posts/:id`                              | **404** (not 410; no info leak) |
+| `GET /api/posts/:id/comments`                     | **404** (the post is gone; the comment list is part of its public view) |
+| `GET /api/posts/:id/related`                      | **404** (the source for "related" is gone) |
+| `GET /api/subreddits/:name/posts`                 | removed post NOT in subreddit feed |
+| `GET /api/users/:name/posts`                      | removed post NOT in user profile |
+| `GET /api/search?type=posts`                      | removed post NOT in search results |
+| `Post.comments` field on a visible post           | excludes removed comments (subquery filter) |
+| `POST /api/posts/:id/vote` / `save` / `hide`      | **404** (the target is gone) — mod can still inspect via DB |
+
+The 404 instead of 410 is deliberate: a 410 would tell an attacker
+"this id existed and was removed" vs "this id never existed" — same
+404 for both is a small information-leak hardening.
+
+Implementation: each handler that reads posts / comments appends
+`AND p.removed_at IS NULL` (or `c.removed_at IS NULL`) to the
+WHERE clause. The `POST_JOIN` macro in `posts.mjs` and `users.mjs`
+also embeds `WHERE ... removed_at IS NULL` inside the
+`comments_count` subquery so the displayed count matches the
+public comment list (a removed comment is gone from both).
+
+**Out of scope for M7:** the SPA doesn't yet surface a "removed
+content" placeholder to admin users (a mod who visits a
+removed post via the URL just sees 404 like everyone else). A
+"view as mod" toggle is deferred to M8.
+
+#### SPA: dark mode (auto / light / dark)
+
+`state.theme` is one of `"auto" | "light" | "dark"`. The new
+`src/js/utils/theme.js` module subscribes to state changes and
+sets `<html data-theme="light|dark">` (or removes the attribute
+for auto). The CSS in `src/css/variables.css` defines the dark
+token set under `[data-theme="dark"]`, plus a fallback
+`@media (prefers-color-scheme: dark)` block for auto-mode users
+who haven't picked explicitly.
+
+Theme toggle lives in the header (icon button next to the user
+menu) with a 3-option dropdown: 跟随系统 / 浅色 / 深色. The icon
+flips sun ↔ moon based on the resolved theme.
+
+#### SPA: admin / mod queue page
+
+`#/admin` route (admin only — the page bounces non-admins with a
+"需要管理员权限" empty state). Uses the M6 endpoints:
+- `GET /api/admin/reports[?resolved=true]` — list
+- `POST /api/admin/reports/:id/resolve` — dismiss / remove_content
+buttons render inline per row. The "unresolved / resolved" tab
+switches the filter. Admins get a "管理面板" entry in their user
+menu (in `components/header.js`).
+
+#### SPA: mobile responsive
+
+Added a `< 600px` @media block in `src/css/shell.css` that:
+- Shrinks the header search box
+- Hides the word "reddit" next to the logo
+- Reduces main padding from `var(--spacer-4)` to `var(--spacer-2)`
+- Hides the "评论" / domain sublabels on each post action row
+  (saves ~50px per card on the home feed)
+
+The `< 960px` block (already in v2.x) hides the left nav and the
+right rail, so phones get a single-column feed. The hamburger
+drawer was already wired in v2.x.
+
 ## Sort/filter algorithm (canonical)
 
 Server-side sort/filter matches the v2.x mock exactly so the SPA

@@ -63,7 +63,7 @@ export function registerSubreddits(router) {
         FROM posts p
         JOIN users u       ON u.id = p.author_id
         JOIN subreddits s  ON s.id = p.subreddit_id
-       WHERE p.subreddit_id = ?
+       WHERE p.subreddit_id = ? AND p.removed_at IS NULL
     `).all(sub.id);
     const filtered = applyTimeRange(rows, t);
     const sorted = sortPosts(filtered, sort);

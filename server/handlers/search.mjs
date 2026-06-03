@@ -54,7 +54,8 @@ export function registerSearch(router) {
           FROM posts p
           JOIN users u       ON u.id = p.author_id
           JOIN subreddits s  ON s.id = p.subreddit_id
-         WHERE LOWER(p.title) LIKE ? OR LOWER(IFNULL(p.body,'')) LIKE ?
+         WHERE p.removed_at IS NULL
+           AND (LOWER(p.title) LIKE ? OR LOWER(IFNULL(p.body,'')) LIKE ?)
          ORDER BY p.score DESC LIMIT ?
       `).all(like, like, limit);
       out.posts = rows.map(shapePost);

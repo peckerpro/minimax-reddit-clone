@@ -44,7 +44,8 @@ function shapeComment(c) {
 
 const POST_JOIN = `
   SELECT p.*, u.name AS author_name, s.name AS subreddit_name,
-         (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.id) AS comments_count
+         (SELECT COUNT(*) FROM comments cm
+            WHERE cm.post_id = p.id AND cm.removed_at IS NULL) AS comments_count
     FROM posts p
     JOIN users u       ON u.id = p.author_id
     JOIN subreddits s  ON s.id = p.subreddit_id
@@ -64,7 +65,7 @@ export function registerUsers(router) {
     const sort = url.searchParams.get("sort") || "hot";
     const t = url.searchParams.get("t") || "all";
     const limit = Math.min(Number(url.searchParams.get("limit")) || 25, 100);
-    const rows = ctx.db.prepare(`${POST_JOIN} WHERE p.author_id = ?`).all(u.id);
+    const rows = ctx.db.prepare(`${POST_JOIN} WHERE p.author_id = ? AND p.removed_at IS NULL`).all(u.id);
     const filtered = applyTimeRange(rows, t);
     const sorted = sortPosts(filtered, sort);
     sendJson(res, sorted.slice(0, limit).map(shapePost));

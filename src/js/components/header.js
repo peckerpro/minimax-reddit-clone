@@ -7,6 +7,49 @@ import { auth } from "../auth.js";
 import { toast } from "./toast.js";
 import { dropdown } from "./dropdown.js";
 
+// M7: theme toggle (auto / light / dark). Lives in the header so
+// it's always reachable. The actual color swap happens via
+// utils/theme.js -> state.setTheme.
+function ThemeToggle() {
+  const cur = state.get().theme || "auto";
+  const trigger = h(
+    "button",
+    {
+      class: "icon-btn header__theme",
+      type: "button",
+      "aria-label": "主题设置",
+      title: "主题设置",
+    },
+    h("span", { class: "icon-btn__inner", html: icon(cur === "dark" ? "moon" : "sun", { size: 18 }) })
+  );
+  dropdown(trigger, () => {
+    const opts = [
+      { value: "auto",  label: "跟随系统", icon: "circle" },
+      { value: "light", label: "浅色",     icon: "sun" },
+      { value: "dark",  label: "深色",     icon: "moon" },
+    ];
+    return h(
+      "div",
+      { class: "dd__panel", role: "menu" },
+      ...opts.map((o) =>
+        h(
+          "button",
+          {
+            class: ["user-panel__item", o.value === cur ? "is-active" : ""].join(" "),
+            onClick: () => {
+              state.setTheme(o.value);
+              document.body.click();
+            },
+          },
+          h("span", { html: icon(o.icon, { size: 16 }) }),
+          o.label
+        )
+      )
+    );
+  });
+  return trigger;
+}
+
 const SEARCH_PLACEHOLDER = "搜索 Reddit";
 
 function Logo() {
@@ -158,6 +201,22 @@ function UserMenuPanel() {
       "通知"
     )
   );
+  if (user.role === "admin") {
+    wrap.appendChild(
+      h(
+        "button",
+        {
+          class: "user-panel__item",
+          role: "menuitem",
+          onClick: () => {
+            location.hash = "#/admin";
+          },
+        },
+        h("span", { html: icon("shield", { size: 18 }) }),
+        "管理面板"
+      )
+    );
+  }
   wrap.appendChild(h("hr", { class: "user-panel__sep" }));
   wrap.appendChild(
     h(
@@ -187,7 +246,7 @@ function UserMenuPanel() {
 export function Header({ onHamburger } = {}) {
   const right = h("div", { class: "header__right" });
   function renderRight() {
-    right.replaceChildren(UserMenuButton());
+    right.replaceChildren(ThemeToggle(), UserMenuButton());
   }
   renderRight();
 
