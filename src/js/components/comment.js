@@ -237,14 +237,22 @@ export function Comment(comment, children, opts = {}) {
       replyBoxSlot.appendChild(
         ReplyBox({
           onCancel: () => toggleReply(),
-          onSubmit: (text) => {
+          onSubmit: async (text) => {
             const t = (text || "").trim();
             if (!t) {
               toast("请输入内容", { kind: "warn" });
               return;
             }
-            toast("回复已发布（mock）", { kind: "success" });
-            toggleReply();
+            try {
+              await api.submitComment(comment.postId, {
+                body: t,
+                parentId: comment.id,
+              });
+              toast("回复已发布（刷新可见）", { kind: "success" });
+              toggleReply();
+            } catch (err) {
+              toast(`发布失败：${err?.message || err}`, { kind: "error" });
+            }
           },
         })
       );

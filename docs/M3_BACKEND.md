@@ -176,11 +176,82 @@ doesn't exist. 403 forbidden on self-vote.
 yet, and the SPA's comment save button is still a MOCK toast);
 follow / block / subscribe (these are M5 "social").
 
-### M4 (writes — content)
-- `POST /api/posts` `{subredditId, kind, title, body, …}` → `Post`
-- `POST /api/posts/:id/comments` `{parentId?, body}` → `Comment`
-- `POST /api/drafts` / `PATCH /api/drafts/:id` / `DELETE /api/drafts/:id`
-- `POST /api/reports` `{targetKind, targetId, reason, detail}`
+### M4 (writes — content) — DONE
+
+All endpoints require auth (401 if anon). 400 invalid on bad
+body. 404 not_found when the target (subreddit / post / parent
+comment) is missing. 409 conflict on duplicate subreddit name.
+
+#### `POST /api/posts`  — create a new post
+
+Request body:
+```json
+{
+  "subreddit": "technology",   // bare name, no r/ prefix
+  "kind": "text" | "link" | "image" | "video",
+  "title": "1-300 chars",
+  "body": "optional (text posts: required, 1-50000 chars)",
+  "url":  "optional (link posts: required, valid URL)",
+  "image": "optional (image posts: required, valid URL)"
+}
+```
+Returns 201 with the new `Post` shape (camelCase, `subreddit`
+and `author` as bare names, `score=1` from the implicit author
+upvote, members count of the subreddit bumped by 1).
+
+#### `POST /api/posts/:id/comments`  — create a comment
+
+Request body:
+```json
+{ "body": "1-10000 chars", "parentId": "<comment-id> | null" }
+```
+Returns 201 with the new `Comment` shape, including computed
+`path` (`/<id>` for top-level, `<parent.path>/<id>` for replies)
+and `depth` (0 for top-level, 1 for a direct reply, …).
+
+#### `POST /api/subreddits`  — create a community
+
+Request body:
+```json
+{
+  "name": "3-21 chars, lowercase letters/digits/underscore",
+  "display": "1-50 chars",
+  "description": "optional",
+  "color": "#hex (default #ff4500)",
+  "iconText": "1-4 chars (default first 2 letters of name)",
+  "category": "tech|gaming|news|sports|music|movies|books|food|travel|science|art|fashion|finance|other",
+  "type":    "public|restricted|private (default public)"
+}
+```
+Returns 201 with the new `Subreddit` shape. 409 conflict on
+duplicate name (case-insensitive).
+
+#### `/api/drafts`  — drafts (CRUD, caller-only)
+
+| Method | Path | Body | 200 | 4xx |
+| --- | --- | --- | --- | --- |
+| POST   | `/api/drafts`        | `{kind, subredditId?, title?, body?}` | `Draft` (201) | 400 invalid |
+| PATCH  | `/api/drafts/:id`    | `{title?, body?, kind?, subredditId?}` | `Draft` (ts refreshed) | 400 / 404 (not yours) |
+| DELETE | `/api/drafts/:id`    | `{}` | `{ok:true}` | 404 (not yours) |
+| GET    | `/api/drafts`        | — | `Draft[]` (newest first, 50 max) | 401 |
+
+A `Draft` is `{id, userId, kind, subredditId, title, body, ts}`.
+Caller only — PATCH / DELETE on someone else's draft 404s (so the
+endpoint doesn't leak draft ids).
+
+#### `POST /api/reports`  — report content
+
+Request body:
+```json
+{ "targetKind": "post" | "comment", "targetId": "<id>", "reason": "...", "detail": "optional" }
+```
+Returns 201 with `{id, ok, targetExists}` — even missing targets
+are recorded (so a mod can spot spam waves hitting random ids),
+but `targetExists: false` so the M6 mod queue can filter.
+
+**Out of scope for M4:** post / comment **edit** + **delete** (the
+UI doesn't surface these yet, the schema has no `deleted_at` /
+`edited_at` columns). Deferred to M7 polish or M8 hardening.
 
 ### M5 (social)
 - `GET /api/notifications` (unauth → 401)

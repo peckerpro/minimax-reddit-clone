@@ -282,14 +282,27 @@ export async function PostDetail({ postId, contextCid = null }) {
       {
         class: "btn btn--primary",
         type: "button",
-        onClick: () => {
+        onClick: async () => {
           const t = ta.value.trim();
           if (!t) {
             toast("请输入评论内容", { kind: "warn" });
             return;
           }
-          toast("评论已发布（mock）", { kind: "success" });
-          ta.value = "";
+          try {
+            const created = await api.submitComment(postId, { body: t });
+            ta.value = "";
+            toast("评论已发布", { kind: "success" });
+            // Push the new comment into the in-memory list and re-render.
+            flatComments.push(created);
+            // Also fetch the author so the tree can render the avatar / color.
+            if (!authorsByName.has((created.author || "").toLowerCase())) {
+              const a = await api.getUser(created.author).catch(() => null);
+              if (a) authorsByName.set(a.name.toLowerCase(), a);
+            }
+            rerenderComments();
+          } catch (err) {
+            toast(`发布失败：${err?.message || err}`, { kind: "error" });
+          }
         },
       },
       "评论"

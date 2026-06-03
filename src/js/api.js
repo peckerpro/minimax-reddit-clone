@@ -22,13 +22,13 @@ async function getJsonOr(path, fallback) {
   }
 }
 
-// POST a JSON body. `null` body ⇒ empty body. Returns the parsed
-// response on 2xx, throws on 4xx (except 401 → "unauthorized" string
-// for callers to detect without a status property), returns null on
-// 404 so the SPA can silently no-op a toggle.
-async function postJson(path, body) {
+// POST (or PATCH/DELETE) a JSON body. `null` body ⇒ empty body.
+// Returns the parsed response on 2xx, throws on 4xx (except 401 →
+// "unauthorized" for callers to detect without a status property),
+// returns null on 404 so the SPA can silently no-op a toggle.
+async function postJson(path, body, method = "POST") {
   const r = await fetch(BASE + path, {
-    method: "POST",
+    method,
     credentials: "same-origin",
     headers: body == null ? {} : { "content-type": "application/json" },
     body: body == null ? undefined : JSON.stringify(body),
@@ -36,10 +36,12 @@ async function postJson(path, body) {
   if (r.status === 404) return null;
   if (r.status === 401) throw new Error("unauthorized");
   if (!r.ok) {
-    let msg = `POST ${path} ${r.status}`;
+    let msg = `${method} ${path} ${r.status}`;
     try { const j = await r.json(); if (j?.message) msg = j.message; } catch {}
     throw new Error(msg);
   }
+  // 204 No Content
+  if (r.status === 204) return null;
   return r.json();
 }
 
@@ -191,5 +193,43 @@ export const api = {
   },
   async toggleHidePost(postId) {
     return postJson(`/api/posts/${encodeURIComponent(postId)}/hide`, {});
+  },
+
+  // ── M4 writes: content (posts / comments / drafts / subs / reports) ──
+  // Submit a new post. `subreddit` is the bare name (no `r/` prefix).
+  // `kind` is "text" | "link" | "image" | "video". For text posts, body
+  // is required. For link / image posts, url / image is required.
+  // 201 → Post; 400 invalid; 404 subreddit missing; 401 unauthorized.
+  async submitPost({ subreddit, kind, title, body, url, image }) {
+    return postJson("/api/posts", { subreddit, kind, title, body, url, image });
+  },
+  // Submit a new comment. `parentId` is optional (top-level if absent).
+  // 201 → Comment (with computed path + depth); 400 / 404 / 401.
+  async submitComment(postId, { body, parentId }) {
+    return postJson(`/api/posts/${encodeURIComponent(postId)}/comments`, { body, parentId });
+  },
+  // Create a new subreddit. 201 → Subreddit; 400 invalid name; 409 dup.
+  async createSubreddit({ name, display, description, color, iconText, category, type }) {
+    return postJson("/api/subreddits", { name, display, description, color, iconText, category, type });
+  },
+  // Drafts: local-first, server-backed. 201 → Draft.
+  async submitDraft({ kind, subredditId, title, body }) {
+    return postJson("/api/drafts", { kind, subredditId, title, body });
+  },
+  // PATCH a draft. 200 → Draft (with new ts).
+  async updateDraft(draftId, { title, body, kind, subredditId }) {
+    return postJson(`/api/drafts/${encodeURIComponent(draftId)}`, { title, body, kind, subredditId }, "PATCH");
+  },
+  // DELETE a draft. 200 → {ok:true}.
+  async deleteDraft(draftId) {
+    return postJson(`/api/drafts/${encodeURIComponent(draftId)}`, null, "DELETE");
+  },
+  // List the caller's drafts. 200 → Draft[].
+  async listDrafts() {
+    return getJsonOr("/api/drafts", []);
+  },
+  // File a report. 201 → {id, targetExists}.
+  async submitReport({ targetKind, targetId, reason, detail }) {
+    return postJson("/api/reports", { targetKind, targetId, reason, detail });
   },
 };

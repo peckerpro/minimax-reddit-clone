@@ -40,12 +40,13 @@ globalThis.structuredClone = (v) => JSON.parse(JSON.stringify(v));
 function jsonResp(obj, status = 200) {
   return { ok: status < 400, status, json: async () => obj, text: async () => JSON.stringify(obj) };
 }
-globalThis.fetch = async (url, opts) => {
+globalThis.fetch = async (url, opts = {}) => {
   const u = new URL(url, "http://stub");
   const path = u.pathname;
   const q = u.searchParams;
+  opts.method = opts.method || "GET";
 
-  if (path === "/api/subreddits" || path === "/api/subreddits/") {
+  if ((path === "/api/subreddits" || path === "/api/subreddits/") && opts.method === "GET") {
     const limit = Number(q.get("limit")) || 100;
     const needle = (q.get("q") || "").toLowerCase();
     let list = mocks.subreddits;
@@ -85,9 +86,10 @@ globalThis.fetch = async (url, opts) => {
     }
   }
 
-  // /api/posts[/:id[/(comments|related|crossposts)]]
+  // /api/posts[/:id[/(comments|related|crossposts)]]   (GET only — POSTs
+  // /api/posts/:id/comments fall through to the M4 handler below)
   m = path.match(/^\/api\/posts\/([^/]+)(?:\/(comments|related|crossposts))?$/);
-  if (m) {
+  if (m && opts.method === "GET") {
     const post = mocks.posts.find((p) => p.id === m[1]);
     if (path.endsWith("/comments")) {
       if (!post) return jsonResp([]);
@@ -102,7 +104,7 @@ globalThis.fetch = async (url, opts) => {
     return jsonResp(post);
   }
 
-  if (path === "/api/posts" || path === "/api/posts/") {
+  if ((path === "/api/posts" || path === "/api/posts/") && opts.method === "GET") {
     const sort = q.get("sort") || "best";
     const t = q.get("t") || "all";
     const subreddit = q.get("subreddit");
@@ -177,6 +179,80 @@ globalThis.fetch = async (url, opts) => {
     return jsonResp({ score: 1, userVote: 1, authorKarma: 1, prev: 0, delta: 1 });
   }
 
+  // ── M4 content writes (stub) ───────────────────────────
+  // POST /api/posts → echo back with a fake new id + score=1
+  if ((path === "/api/posts" || path === "/api/posts/") && opts.method === "POST") {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    const id = `p_stub_${Math.floor(Math.random() * 1e6)}`;
+    return jsonResp({
+      id, subreddit: body.subreddit || "stub", author: "stub", title: body.title || "",
+      body: body.body || "", kind: body.kind || "text",
+      image: body.image, url: body.url, domain: null, flair: null,
+      score: 1, comments: 0, nsfw: false, spoiler: false, pinned: false,
+      createdAt: new Date().toISOString(),
+    }, 201);
+  }
+  // POST /api/posts/:id/comments
+  let mM4 = path.match(/^\/api\/posts\/([^/]+)\/comments$/);
+  if (mM4 && opts?.method === "POST") {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({
+      id: `c_stub_${Math.floor(Math.random() * 1e6)}`,
+      postId: mM4[1], parentId: body.parentId || null,
+      author: "stub", body: body.body || "", score: 1,
+      depth: body.parentId ? 1 : 0, path: body.parentId ? `/${body.parentId}/c_stub` : "/c_stub",
+      createdAt: new Date().toISOString(),
+    }, 201);
+  }
+  // POST /api/subreddits
+  if ((path === "/api/subreddits" || path === "/api/subreddits/") && opts.method === "POST") {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({
+      id: `s_stub_${Math.floor(Math.random() * 1e6)}`,
+      name: body.name, display: body.display, description: body.description || "",
+      color: body.color || "#ff4500", iconText: body.iconText || "S",
+      category: body.category || "other", type: body.type || "public", rules: [],
+      weeklyVisitors: 0, weeklyContributors: 0, members: 1,
+      createdAt: new Date().toISOString(),
+    }, 201);
+  }
+  // /api/drafts[/:id]
+  if (path === "/api/drafts" || path === "/api/drafts/") {
+    if (opts?.method === "GET") return jsonResp([]);
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({
+      id: `d_stub_${Math.floor(Math.random() * 1e6)}`,
+      userId: "u_stub", kind: body.kind || "text", subredditId: body.subredditId || null,
+      title: body.title || "", body: body.body || "",
+      ts: new Date().toISOString(),
+    }, 201);
+  }
+  mM4 = path.match(/^\/api\/drafts\/([^/]+)$/);
+  if (mM4) {
+    if (opts?.method === "DELETE") return jsonResp({ ok: true });
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({
+      id: mM4[1], userId: "u_stub", kind: body.kind || "text",
+      subredditId: body.subredditId || null,
+      title: body.title || "stub", body: body.body || "",
+      ts: new Date().toISOString(),
+    });
+  }
+  // POST /api/reports
+  if ((path === "/api/reports" || path === "/api/reports/") && opts.method === "POST") {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({
+      id: `r_stub_${Math.floor(Math.random() * 1e6)}`,
+      ok: true, targetExists: !!body.targetId,
+    }, 201);
+  }
+
   // default: 404
   return jsonResp({ error: "not_found", message: `no stub for ${path}` }, 404);
 };
@@ -229,6 +305,28 @@ const cases = [
     (r) => r && typeof r.saved === "boolean"],
   ["toggleHidePost",      () => api.toggleHidePost("p001"),
     (r) => r && typeof r.hidden === "boolean"],
+
+  // ── M4 content writes ─────────────────────────────────
+  ["submitPost text",     () => api.submitPost({ subreddit: "technology", kind: "text", title: "x", body: "y" }),
+    (r) => r && r.id?.startsWith("p_") && r.subreddit === "technology" && r.score === 1],
+  ["submitPost link",     () => api.submitPost({ subreddit: "technology", kind: "link", title: "x", url: "https://example.com" }),
+    (r) => r && r.kind === "link" && r.url],
+  ["submitComment",       () => api.submitComment("p001", { body: "hello" }),
+    (r) => r && r.id?.startsWith("c_") && r.parentId === null && r.depth === 0],
+  ["submitComment reply", () => api.submitComment("p001", { body: "reply", parentId: "c_abc" }),
+    (r) => r && r.parentId === "c_abc" && r.depth === 1],
+  ["createSubreddit",     () => api.createSubreddit({ name: "newsub99", display: "New" }),
+    (r) => r && r.name === "newsub99" && r.members === 1],
+  ["submitDraft",         () => api.submitDraft({ kind: "text", title: "WIP", body: "halfway" }),
+    (r) => r && r.id?.startsWith("d_") && r.title === "WIP"],
+  ["updateDraft",         () => api.updateDraft("d_abc", { title: "WIP2" }),
+    (r) => r && r.id === "d_abc" && r.title === "WIP2"],
+  ["deleteDraft",         () => api.deleteDraft("d_abc"),
+    (r) => r && r.ok === true],
+  ["listDrafts",          () => api.listDrafts(),
+    (r) => Array.isArray(r)],
+  ["submitReport",        () => api.submitReport({ targetKind: "post", targetId: "p001", reason: "spam" }),
+    (r) => r && r.id?.startsWith("r_") && r.targetExists === true],
 ];
 
 let bad = 0;

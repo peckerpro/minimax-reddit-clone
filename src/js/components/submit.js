@@ -101,7 +101,7 @@ export function SubmitPage() {
     {
       class: "btn btn--primary",
       type: "button",
-      onClick: () => {
+      onClick: async () => {
         const sub = subSel.value;
         const title = titleIn.value.trim();
         if (!sub) return toast("请选择一个社区", { kind: "warn" });
@@ -109,13 +109,58 @@ export function SubmitPage() {
         if (kind === "link" && !urlIn.value.trim()) return toast("请输入链接 URL", { kind: "warn" });
         if (kind === "image" && !imgIn.value.trim()) return toast("请输入图片 URL", { kind: "warn" });
         if (kind === "text" && !bodyIn.value.trim()) return toast("请输入正文", { kind: "warn" });
-        toast("帖子已发布（mock）", { kind: "success" });
-        setTimeout(() => {
-          location.hash = `#/r/${sub}`;
-        }, 600);
+        try {
+          const post = await api.submitPost({
+            subreddit: sub,
+            kind,
+            title,
+            body: bodyIn.value.trim(),
+            url: kind === "link" ? urlIn.value.trim() : undefined,
+            image: kind === "image" ? imgIn.value.trim() : undefined,
+          });
+          toast("帖子已发布", { kind: "success" });
+          setTimeout(() => {
+            location.hash = `#/r/${sub}/comments/${post.id}`;
+          }, 400);
+        } catch (err) {
+          toast(`发布失败：${err?.message || err}`, { kind: "error" });
+        }
       },
     },
     "发布"
+  );
+
+  const saveDraft = h(
+    "button",
+    {
+      class: "btn btn--ghost",
+      type: "button",
+      onClick: async () => {
+        const title = titleIn.value.trim();
+        if (!title && !bodyIn.value.trim()) {
+          return toast("标题和正文都为空，没法保存草稿", { kind: "warn" });
+        }
+        try {
+          const d = await api.submitDraft({
+            kind,
+            title,
+            body: bodyIn.value.trim(),
+          });
+          state.saveDraft({
+            id: d.id,
+            kind,
+            subreddit: subSel.value,
+            title,
+            body: bodyIn.value.trim(),
+            ts: Date.now(),
+          });
+          toast("草稿已保存到服务器", { kind: "success" });
+        } catch (err) {
+          toast(`保存草稿失败：${err?.message || err}`, { kind: "error" });
+        }
+      },
+    },
+    "保存草稿"
   );
 
   return h(
@@ -132,7 +177,7 @@ export function SubmitPage() {
       fieldText,
       fieldLink,
       fieldImage,
-      h("div", { class: "submit-page__bar" }, submit)
+      h("div", { class: "submit-page__bar" }, saveDraft, submit)
     )
   );
 }
