@@ -10,6 +10,7 @@ import { sendError, sendJson } from "../lib/errors.mjs";
 import { tx } from "../db.mjs";
 import { requireAuth } from "../middleware/auth-required.mjs";
 import { ulid } from "../lib/ulid.mjs";
+import { fireNotification } from "../lib/notifications.mjs";
 
 // ── shapes ───────────────────────────────────────────────
 
@@ -114,6 +115,15 @@ export function registerSocial(router) {
           ctx.db.prepare(
             "INSERT INTO followed_users (follower_id, followee_id, created_at) VALUES (?, ?, ?)"
           ).run(ctx.user.id, target.id, new Date().toISOString());
+          // M6: fire a "follow" notification to the followee. Dedup
+          // means a user can only get one "follow" notif per
+          // follower (so unfollow + refollow doesn't spam).
+          fireNotification(ctx.db, {
+            userId: target.id,
+            kind: "follow",
+            sourceKind: "user",
+            sourceId: ctx.user.id,
+          });
         }
         return { following: true };
       } else {

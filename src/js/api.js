@@ -233,6 +233,21 @@ export const api = {
     return postJson("/api/reports", { targetKind, targetId, reason, detail });
   },
 
+  // ── M6 admin / mod queue (admin only — server returns 403 if not) ──
+  // List unresolved (or all) reports. `?resolved=true` includes
+  // resolved ones. Caller must have role = "admin".
+  async getAdminReports(opts = {}) {
+    const q = opts.resolved ? "?resolved=true" : "";
+    return getJsonOr(`/api/admin/reports${q}`, []);
+  },
+  // Resolve a report. `action` is "dismiss" | "remove_content".
+  // "dismiss" marks the report resolved without touching the content.
+  // "remove_content" sets the target's `removed_at` / `removed_by`
+  // columns in addition to marking the report resolved.
+  async resolveReport(reportId, action) {
+    return postJson(`/api/admin/reports/${encodeURIComponent(reportId)}/resolve`, { action });
+  },
+
   // ── M5 social: subscribe / follow / block / notifications / messages ──
   // Subscribe to a subreddit. `action` is "join" | "leave".
   // 200 → {subscribed: bool, level: "all"|"none"}.

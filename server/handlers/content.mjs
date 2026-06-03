@@ -10,6 +10,7 @@ import { sendError, sendJson } from "../lib/errors.mjs";
 import { tx } from "../db.mjs";
 import { requireAuth } from "../middleware/auth-required.mjs";
 import { ulid } from "../lib/ulid.mjs";
+import { fireReplyNotification } from "../lib/notifications.mjs";
 
 const SUBREDDIT_NAME_RE = /^[a-z0-9_]{3,21}$/;
 const POST_KINDS = new Set(["text", "link", "image", "video"]);
@@ -229,6 +230,32 @@ export function registerContent(router) {
         INSERT INTO comments (id, post_id, parent_id, author_id, body, score, depth, path, created_at)
         VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
       `).run(id, post.id, body.parentId || null, ctx.user.id, body.body.trim(), depth, path, new Date().toISOString());
+
+      // M6: fire a "reply" notification. Target = parent comment's
+      // author (if a reply) or the post's author (if a top-level
+      // comment). Skip if the actor is the target (self-reply).
+      let recipientId = null;
+      let sourceKind = null;
+      if (body.parentId) {
+        const parent = ctx.db.prepare("SELECT author_id FROM comments WHERE id = ?")
+          .get(body.parentId);
+        recipientId = parent?.author_id;
+        sourceKind = "comment";
+      } else {
+        const p = ctx.db.prepare("SELECT author_id FROM posts WHERE id = ?")
+          .get(post.id);
+        recipientId = p?.author_id;
+        sourceKind = "post";
+      }
+      if (recipientId && recipientId !== ctx.user.id) {
+        fireReplyNotification(ctx.db, {
+          recipientId,
+          sourceKind,
+          sourceId: sourceKind === "comment" ? body.parentId : post.id,
+          actorId: ctx.user.id,
+        });
+      }
+
       return { id };
     });
     if (result?.__postNotFound) return sendError(res, "not_found", `post ${params.id} not found`);

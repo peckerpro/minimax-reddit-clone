@@ -15,6 +15,7 @@ import { readBody } from "../lib/body.mjs";
 import { sendError, sendJson } from "../lib/errors.mjs";
 import { tx } from "../db.mjs";
 import { requireAuth } from "../middleware/auth-required.mjs";
+import { fireNotification } from "../lib/notifications.mjs";
 
 function validateVoteBody(body) {
   const errs = {};
@@ -80,6 +81,20 @@ export function registerInteractions(router) {
           .run(delta, params.id);
         ctx.db.prepare("UPDATE users SET karma = karma + ? WHERE id = ?")
           .run(delta, post.author_id);
+        // M6: fire "upvote" notif to the author on net-positive delta.
+        // We only fire when the vote ends up non-zero; dedupe means
+        // a user can only get one "upvote" notif per post. (We don't
+        // try to dedupe by direction — switching from up to down
+        // also fires a fresh notif since the actor is now expressing
+        // a different opinion.)
+        if (body.direction !== 0) {
+          fireNotification(ctx.db, {
+            userId: post.author_id,
+            kind: "upvote",
+            sourceKind: "post",
+            sourceId: params.id,
+          });
+        }
       }
       const after = ctx.db.prepare("SELECT score FROM posts WHERE id = ?").get(params.id);
       const author = ctx.db.prepare("SELECT karma FROM users WHERE id = ?").get(post.author_id);
@@ -120,6 +135,16 @@ export function registerInteractions(router) {
           .run(delta, params.id);
         ctx.db.prepare("UPDATE users SET karma = karma + ? WHERE id = ?")
           .run(delta, c.author_id);
+        // M6: same as post vote — fire "upvote" notif to the
+        // comment's author on a non-zero resolved vote. Deduped.
+        if (body.direction !== 0) {
+          fireNotification(ctx.db, {
+            userId: c.author_id,
+            kind: "upvote",
+            sourceKind: "comment",
+            sourceId: params.id,
+          });
+        }
       }
       const after = ctx.db.prepare("SELECT score FROM comments WHERE id = ?").get(params.id);
       const author = ctx.db.prepare("SELECT karma FROM users WHERE id = ?").get(c.author_id);

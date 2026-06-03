@@ -314,6 +314,26 @@ globalThis.fetch = async (url, opts = {}) => {
     }, 201);
   }
 
+  // ── M6 admin / mod queue (stub) ──────────────────────────
+  // GET /api/admin/reports
+  if (path === "/api/admin/reports" || path === "/api/admin/reports/") {
+    return jsonResp([
+      {
+        id: "r_stub_1", reporter: "alice", targetKind: "post", targetId: "p_stub",
+        targetAuthor: "bob", targetRemoved: false, reason: "spam", detail: "",
+        resolved: false, resolvedAt: null, resolvedBy: null, resolution: null,
+        createdAt: "2026-06-02T05:14:00Z",
+      },
+    ]);
+  }
+  // POST /api/admin/reports/:id/resolve
+  let mM6 = path.match(/^\/api\/admin\/reports\/([^/]+)\/resolve$/);
+  if (mM6) {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({ ok: true, id: mM6[1], action: body.action || "dismiss" });
+  }
+
   // default: 404
   return jsonResp({ error: "not_found", message: `no stub for ${path}` }, 404);
 };
@@ -418,6 +438,16 @@ const cases = [
     (r) => Array.isArray(r)],
   ["sendMessage",         () => api.sendMessage({ to: "bob", subject: "hi", body: "yo" }),
     (r) => r && r.id?.startsWith("m_") && r.to === "bob"],
+
+  // ── M6 admin / mod queue ───────────────────────────────
+  ["getAdminReports",     () => api.getAdminReports(),
+    (r) => Array.isArray(r) && r.every((x) => x.id && x.targetKind)],
+  ["getAdminReports resolved", () => api.getAdminReports({ resolved: true }),
+    (r) => Array.isArray(r)],
+  ["resolveReport dismiss", () => api.resolveReport("r_abc", "dismiss"),
+    (r) => r && r.ok === true && r.action === "dismiss"],
+  ["resolveReport remove_content", () => api.resolveReport("r_abc", "remove_content"),
+    (r) => r && r.ok === true && r.action === "remove_content"],
 ];
 
 let bad = 0;

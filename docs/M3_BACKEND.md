@@ -306,6 +306,94 @@ M6 (e.g. comment-create fires a `reply` notification, vote fires
 `Message` shape: `{id, from, to, subject, body, read, createdAt}`
 where `from` / `to` are bare usernames (not ids).
 
+### M6 (admin / safety) — DONE
+
+All endpoints require auth (401 if anon) AND the caller's
+`users.role = "admin"` (403 otherwise). The role gate is enforced
+in `server/handlers/admin.mjs`'s `requireAdmin(ctx)` helper.
+
+#### Notification triggers (write side of M5's read API)
+
+M5 shipped `GET /api/notifications` but the trigger side was M6.
+Three existing handlers now fire notif rows on every state change
+that warrants one:
+
+| Trigger                     | Kind     | Source kind | Source id      | Dedup |
+| --------------------------- | -------- | ----------- | -------------- | ----- |
+| `POST /api/posts/:id/comments` (top-level) | `reply` | `post`    | the post id    | `(recipient, "reply", postId)` |
+| `POST /api/posts/:id/comments` (with parentId) | `reply` | `comment` | the parent cmt id | `(recipient, "reply", parentId)` |
+| `POST /api/posts/:id/vote`     | `upvote` | `post`    | the post id    | `(recipient, "upvote", postId)` |
+| `POST /api/comments/:id/vote`  | `upvote` | `comment` | the comment id | `(recipient, "upvote", commentId)` |
+| `POST /api/users/:name/follow` (action=follow) | `follow` | `user` | the follower's user id | `(recipient, "follow", followerId)` |
+
+Self-actions never fire (self-reply, self-vote is already 403,
+self-follow is already 403). `direction: 0` on a vote (clear) is
+a no-op for notifs (delta = 0 path doesn't fire).
+
+Dedup is `(user_id, kind, source_kind, source_id)` via an O(log n)
+SELECT-then-INSERT in `server/lib/notifications.mjs`. No UNIQUE
+index needed because the dedup is per-call race-safe enough (a
+concurrent vote from the same user is an edge case that just
+leaves a single row either way).
+
+#### Migration 0002_moderation.sql
+
+Adds the columns the mod queue reads:
+
+```sql
+ALTER TABLE posts    ADD COLUMN removed_at TEXT;
+ALTER TABLE posts    ADD COLUMN removed_by TEXT REFERENCES users(id);
+ALTER TABLE comments ADD COLUMN removed_at TEXT;
+ALTER TABLE comments ADD COLUMN removed_by TEXT REFERENCES users(id);
+ALTER TABLE reports  ADD COLUMN resolved_at TEXT;
+ALTER TABLE reports  ADD COLUMN resolved_by TEXT REFERENCES users(id);
+ALTER TABLE reports  ADD COLUMN resolution   TEXT;  -- 'dismissed' | 'removed'
+```
+
+Idempotent: tracked by `migrations/_migrations` table, so running
+the migration on an already-M6'd DB is a no-op.
+
+#### Mod queue endpoints
+
+| Method | Path | Body | 200 | 4xx |
+| --- | --- | --- | --- | --- |
+| GET  | `/api/admin/reports`                 | — | `Report[]` (default: unresolved only, newest first, 200 max) | 401 / 403 |
+| GET  | `/api/admin/reports?resolved=true`  | — | includes resolved reports too | 401 / 403 |
+| POST | `/api/admin/reports/:id/resolve`     | `{action: "dismiss" \| "remove_content"}` | `{ok: true, id, action}` | 400 bad action / 401 / 403 / 404 / 409 already-resolved |
+
+`action: "dismiss"` — marks the report resolved, leaves content
+visible.
+`action: "remove_content"` — marks the report resolved AND sets
+`posts.removed_at` / `posts.removed_by` (or comments.*) so the
+public read API can filter it out (M7 will wire the filter; for
+M6 the flag is set, but `/api/posts/:id` and
+`/api/posts/:id/comments` still return removed content — the
+SPA doesn't have a "removed" UI yet).
+
+`Report` shape:
+```json
+{
+  "id": "r_xxx",
+  "reporter": "alice",
+  "targetKind": "post",
+  "targetId": "p_xxx",
+  "targetAuthor": "bob",
+  "targetRemoved": false,
+  "reason": "spam",
+  "detail": "",
+  "resolved": false,
+  "resolvedAt": null,
+  "resolvedBy": null,
+  "resolution": null,
+  "createdAt": "2026-06-02T05:14:00.000Z"
+}
+```
+
+**Out of scope for M6:** admin user mgmt (ban / suspend / promote),
+removed-content filtering in public read APIs, mod-assigned
+notifications (e.g. "your post was removed" notif to the
+offending user). Deferred to M7/M8.
+
 ## Sort/filter algorithm (canonical)
 
 Server-side sort/filter matches the v2.x mock exactly so the SPA

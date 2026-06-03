@@ -25,6 +25,7 @@ import { registerSearch } from "./handlers/search.mjs";
 import { registerInteractions } from "./handlers/interactions.mjs";
 import { registerContent } from "./handlers/content.mjs";
 import { registerSocial } from "./handlers/social.mjs";
+import { registerAdmin } from "./handlers/admin.mjs";
 import { authMiddleware } from "./middleware/auth-required.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -46,6 +47,7 @@ registerSearch(router);
 registerInteractions(router);
 registerContent(router);
 registerSocial(router);
+registerAdmin(router);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
