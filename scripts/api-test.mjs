@@ -153,6 +153,30 @@ globalThis.fetch = async (url, opts) => {
     return jsonResp(out);
   }
 
+  // ── M3 write endpoints (stub) ─────────────────────────
+  // The real handlers live in server/handlers/interactions.mjs
+  // and are tested by scripts/_smoke-m3.mjs. The stub just
+  // returns a plausible response so the api-test verifies the
+  // SPA-side shape contract (return type, body parsing).
+
+  let mM3 = path.match(/^\/api\/posts\/([^/]+)\/(vote|save|hide)$/);
+  if (mM3) {
+    const post = mocks.posts.find((p) => p.id === mM3[1]);
+    if (!post) return jsonResp({ error: "not_found" }, 404);
+    const action = mM3[2];
+    if (action === "vote") {
+      let body = {};
+      try { body = JSON.parse(opts?.body || "{}"); } catch {}
+      return jsonResp({ score: post.score, userVote: body.direction || 0, authorKarma: 1, prev: 0, delta: body.direction || 0 });
+    }
+    if (action === "save") return jsonResp({ saved: true });
+    if (action === "hide") return jsonResp({ hidden: true });
+  }
+  mM3 = path.match(/^\/api\/comments\/([^/]+)\/vote$/);
+  if (mM3) {
+    return jsonResp({ score: 1, userVote: 1, authorKarma: 1, prev: 0, delta: 1 });
+  }
+
   // default: 404
   return jsonResp({ error: "not_found", message: `no stub for ${path}` }, 404);
 };
@@ -193,6 +217,18 @@ const cases = [
   ["getUser miss",        () => api.getUser("u_nobody"), (r) => r === null],
 
   ["searchPosts",         () => api.searchPosts("gaming"), (r) => Array.isArray(r)],
+
+  // ── M3 writes ─────────────────────────────────────────
+  ["votePost upvote",     () => api.votePost("p001", 1),
+    (r) => r && typeof r.score === "number" && r.userVote === 1],
+  ["votePost clear",      () => api.votePost("p001", 0),
+    (r) => r && r.userVote === 0],
+  ["voteComment upvote",  () => api.voteComment("c001", 1),
+    (r) => r && typeof r.score === "number" && r.userVote === 1],
+  ["toggleSavePost",      () => api.toggleSavePost("p001"),
+    (r) => r && typeof r.saved === "boolean"],
+  ["toggleHidePost",      () => api.toggleHidePost("p001"),
+    (r) => r && typeof r.hidden === "boolean"],
 ];
 
 let bad = 0;

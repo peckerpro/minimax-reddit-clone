@@ -22,6 +22,27 @@ async function getJsonOr(path, fallback) {
   }
 }
 
+// POST a JSON body. `null` body ⇒ empty body. Returns the parsed
+// response on 2xx, throws on 4xx (except 401 → "unauthorized" string
+// for callers to detect without a status property), returns null on
+// 404 so the SPA can silently no-op a toggle.
+async function postJson(path, body) {
+  const r = await fetch(BASE + path, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: body == null ? {} : { "content-type": "application/json" },
+    body: body == null ? undefined : JSON.stringify(body),
+  });
+  if (r.status === 404) return null;
+  if (r.status === 401) throw new Error("unauthorized");
+  if (!r.ok) {
+    let msg = `POST ${path} ${r.status}`;
+    try { const j = await r.json(); if (j?.message) msg = j.message; } catch {}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+
 // ── static data that the backend doesn't serve yet (awards, share
 //    targets, report reasons). Hardcoded here so the SPA still
 //    works; M8 will move these to /api/awards etc.
@@ -149,5 +170,26 @@ export const api = {
       this.getUser(post.author),
     ]);
     return { ...post, _subreddit: sub, _author: author };
+  },
+
+  // ── M3 writes: votes / save / hide ────────────────
+  // `direction` is the RESOLVED 4-state value: 1 (up), -1 (down),
+  // or 0 (clear). The client computes it from the 4-state machine
+  // in state.votePost / state.voteComment; the server applies the
+  // delta to the stored previous vote and updates score + karma
+  // atomically. Returns {score, userVote, authorKarma, prev, delta}.
+  async votePost(postId, direction) {
+    return postJson(`/api/posts/${encodeURIComponent(postId)}/vote`, { direction });
+  },
+  async voteComment(commentId, direction) {
+    return postJson(`/api/comments/${encodeURIComponent(commentId)}/vote`, { direction });
+  },
+  // Save / hide are toggle-on-row-exists. Returns {saved:true|false}
+  // or {hidden:true|false}. null on 404 (post gone).
+  async toggleSavePost(postId) {
+    return postJson(`/api/posts/${encodeURIComponent(postId)}/save`, {});
+  },
+  async toggleHidePost(postId) {
+    return postJson(`/api/posts/${encodeURIComponent(postId)}/hide`, {});
   },
 };

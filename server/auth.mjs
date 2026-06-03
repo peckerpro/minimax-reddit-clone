@@ -20,13 +20,18 @@ const SCRYPT_R = 8;
 const SCRYPT_P = 1;
 const SCRYPT_MAXMEM = 64 * 1024 * 1024;
 
+let _cachedSecret = null;
 function getSecret() {
+  if (_cachedSecret) return _cachedSecret;
   let s = process.env.SESSION_SECRET;
-  if (s && s.length >= 32) return s;
+  if (s && s.length >= 32) { _cachedSecret = s; return s; }
   // Dev fallback: stable per-process secret so cookies don't break
-  // mid-session in `npm run dev`. NOT for production.
-  s = createHash("sha256").update(`minimax-dev-${process.pid}-${Date.now()}`).digest("hex");
-  return s;
+  // mid-session in `npm run dev`. NOT for production. Memoized —
+  // re-rolling on every call (Date.now() advances) would make
+  // sign/verify diverge and break every auth check after the first
+  // millisecond. See server/test/contract/interactions.test.mjs.
+  _cachedSecret = createHash("sha256").update(`minimax-dev-${process.pid}-${Date.now()}`).digest("hex");
+  return _cachedSecret;
 }
 
 export function newSalt() {

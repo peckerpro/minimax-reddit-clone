@@ -132,17 +132,49 @@ v2.x mock shape. The SPA does the join client-side via `getUser` /
 
 ## Endpoints — v3.0.0 M3+ (to be implemented)
 
-### M3 (writes — votes / saved / hidden)
-- `POST /api/posts/:id/vote` `{value: ±1}` → `{score, userVote}`
-- `DELETE /api/posts/:id/vote`
-- `POST /api/comments/:id/vote` `{value: ±1}`
-- `DELETE /api/comments/:id/vote`
-- `POST /api/posts/:id/save` / `DELETE`
-- `POST /api/posts/:id/hide` / `DELETE`
-- `POST /api/subreddits/:name/join` / `DELETE`
-- `POST /api/users/:name/follow` / `DELETE`
-- `POST /api/users/:name/block` / `DELETE`
-- `POST /api/subreddits/:name/block` / `DELETE`
+### M3 (writes — votes / save / hide) — DONE
+
+All endpoints in this section require auth (401 unauthorized if
+anon). 400 invalid on bad body. 404 not_found if the target id
+doesn't exist. 403 forbidden on self-vote.
+
+#### Vote semantics
+
+- Client sends the **resolved** new vote state: `direction` is `1`
+  (upvote), `-1` (downvote), or `0` (clear). The client computes the
+  resolved value from its 4-state machine (`none + up = up`,
+  `up + up = none`, `up + down = down`, `down + up = up`, etc.).
+- Server looks up the previous row in `post_votes` / `comment_votes`
+  and computes `delta = new - prev` (where missing prev is `0`).
+- In a single transaction the server:
+  1. UPSERTs the `*_votes` row (or DELETEs it for `direction=0`).
+  2. Adjusts `posts.score` / `comments.score` by `delta`.
+  3. Adjusts the **author's** `users.karma` by `delta` (so upvote
+     bumps author karma, downvote drops it, and switching from down
+     to up adds 2).
+- Self-vote returns 403 — the SPA prevents the call by checking
+  `post.author !== state.user.name`, but the backend enforces it.
+- Response: `{score, userVote, authorKarma, prev, delta}`.
+
+#### Save / hide semantics
+
+- A single `POST` endpoint toggles the row. Response is the new
+  state: `{saved: true|false}` or `{hidden: true|false}`.
+- No karma side-effect.
+- 404 if the target id doesn't exist.
+
+#### Endpoints
+
+| Method | Path | Body | 200 | 4xx |
+| --- | --- | --- | --- | --- |
+| POST | `/api/posts/:id/vote` | `{direction: 1\|-1\|0}` | `{score, userVote, authorKarma, prev, delta}` | 400 invalid (bad `direction`), 401 unauthorized, 403 forbidden (self-vote), 404 not_found |
+| POST | `/api/comments/:id/vote` | `{direction: 1\|-1\|0}` | same | same |
+| POST | `/api/posts/:id/save` | `{}` (empty) | `{saved: true\|false}` | 401 unauthorized, 404 not_found |
+| POST | `/api/posts/:id/hide` | `{}` (empty) | `{hidden: true\|false}` | same |
+
+**Deferred to M5+:** comment save / hide (no `saved_comments` table
+yet, and the SPA's comment save button is still a MOCK toast);
+follow / block / subscribe (these are M5 "social").
 
 ### M4 (writes — content)
 - `POST /api/posts` `{subredditId, kind, title, body, …}` → `Post`

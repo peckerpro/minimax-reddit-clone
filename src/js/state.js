@@ -4,6 +4,7 @@
 // unread / subscribedPosts / followedUsers.
 
 import { signal } from "./utils/dom.js";
+import { api } from "./api.js";
 
 const STORAGE_KEY = "reddit-clone::state::v2";
 
@@ -125,39 +126,122 @@ export const state = {
   //   up   + down -> down   (score-2, 切换)
   //   down + up   -> up     (score+2, 切换)
   //   down + down -> none   (score+1, 取消)
+  //
+  // M3: each click also fires POST /api/posts/:id/vote with the
+  // RESOLVED next value (1/-1/0). The server applies the delta to
+  // the stored previous vote and updates post.score + author.karma
+  // atomically. On server error we roll back the optimistic state
+  // and surface a toast. Net effect: the local state always matches
+  // what the server thinks happened, even if the user double-taps
+  // or switches tabs.
   getVote: (postId) => stateSignal.get().votes[postId] || 0,
-  votePost: (postId, dir) =>
-    stateSignal.set((p) => {
-      const prev = p.votes[postId] || 0;
-      const next = prev === dir ? 0 : dir;
-      return { ...p, votes: { ...p.votes, [postId]: next } };
-    }),
+  votePost: (postId, dir) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;          // gated by the component already
+    const prev = cur.votes[postId] || 0;
+    const next = prev === dir ? 0 : dir;
+    if (next === prev) return;      // no-op, don't even call the server
+    // Optimistic local update
+    stateSignal.set((p) => ({ ...p, votes: { ...p.votes, [postId]: next } }));
+    api.votePost(postId, next).then((res) => {
+      // Reconcile with server truth (in case the server saw a
+      // different prev, e.g. another tab voted on the same post).
+      if (res && typeof res.userVote === "number") {
+        stateSignal.set((p) => ({ ...p, votes: { ...p.votes, [postId]: res.userVote } }));
+      }
+    }).catch((err) => {
+      // Roll back. The component will re-render on subscribe.
+      stateSignal.set((p) => ({ ...p, votes: { ...p.votes, [postId]: prev } }));
+      console.warn("[state.votePost]", err?.message || err);
+    });
+  },
   getCommentVote: (commentId) => stateSignal.get().commentVotes[commentId] || 0,
-  voteComment: (commentId, dir) =>
-    stateSignal.set((p) => {
-      const prev = p.commentVotes[commentId] || 0;
-      const next = prev === dir ? 0 : dir;
-      return { ...p, commentVotes: { ...p.commentVotes, [commentId]: next } };
-    }),
+  voteComment: (commentId, dir) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const prev = cur.commentVotes[commentId] || 0;
+    const next = prev === dir ? 0 : dir;
+    if (next === prev) return;
+    stateSignal.set((p) => ({ ...p, commentVotes: { ...p.commentVotes, [commentId]: next } }));
+    api.voteComment(commentId, next).then((res) => {
+      if (res && typeof res.userVote === "number") {
+        stateSignal.set((p) => ({ ...p, commentVotes: { ...p.commentVotes, [commentId]: res.userVote } }));
+      }
+    }).catch((err) => {
+      stateSignal.set((p) => ({ ...p, commentVotes: { ...p.commentVotes, [commentId]: prev } }));
+      console.warn("[state.voteComment]", err?.message || err);
+    });
+  },
 
   // ── hidden / saved / subscribed posts ───────────────
+  // M3: save / hide are server-backed (POST .../save and .../hide
+  // toggle the saved_posts / hidden_posts row). Subscribed-posts is
+  // post-level notification subscription, not part of M3.
   isHidden: (postId) => stateSignal.get().hidden.includes(postId),
-  toggleHidden: (postId) =>
+  toggleHidden: (postId) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const isHidden = cur.hidden.includes(postId);
+    // Optimistic toggle
     stateSignal.set((p) => ({
       ...p,
-      hidden: p.hidden.includes(postId)
+      hidden: isHidden
         ? p.hidden.filter((id) => id !== postId)
         : [...p.hidden, postId],
-    })),
+    }));
+    api.toggleHidePost(postId).then((res) => {
+      // No further state change needed; the toggle was correct.
+      if (!res) {
+        // 404 — post gone. Roll back.
+        stateSignal.set((p) => ({
+          ...p,
+          hidden: isHidden
+            ? [...p.hidden, postId]
+            : p.hidden.filter((id) => id !== postId),
+        }));
+      }
+    }).catch((err) => {
+      stateSignal.set((p) => ({
+        ...p,
+        hidden: isHidden
+          ? [...p.hidden, postId]
+          : p.hidden.filter((id) => id !== postId),
+      }));
+      console.warn("[state.toggleHidden]", err?.message || err);
+    });
+  },
 
   isSaved: (postId) => stateSignal.get().saved.includes(postId),
-  toggleSaved: (postId) =>
+  toggleSaved: (postId) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const isSaved = cur.saved.includes(postId);
     stateSignal.set((p) => ({
       ...p,
-      saved: p.saved.includes(postId)
+      saved: isSaved
         ? p.saved.filter((id) => id !== postId)
         : [...p.saved, postId],
-    })),
+    }));
+    api.toggleSavePost(postId).then((res) => {
+      if (!res) {
+        // 404 — roll back
+        stateSignal.set((p) => ({
+          ...p,
+          saved: isSaved
+            ? [...p.saved, postId]
+            : p.saved.filter((id) => id !== postId),
+        }));
+      }
+    }).catch((err) => {
+      stateSignal.set((p) => ({
+        ...p,
+        saved: isSaved
+          ? [...p.saved, postId]
+          : p.saved.filter((id) => id !== postId),
+      }));
+      console.warn("[state.toggleSaved]", err?.message || err);
+    });
+  },
 
   isSubscribedPost: (postId) => stateSignal.get().subscribedPosts.includes(postId),
   toggleSubscribedPost: (postId) =>

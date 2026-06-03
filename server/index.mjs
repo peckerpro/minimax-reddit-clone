@@ -22,6 +22,7 @@ import { registerSubreddits } from "./handlers/subreddits.mjs";
 import { registerPosts } from "./handlers/posts.mjs";
 import { registerUsers } from "./handlers/users.mjs";
 import { registerSearch } from "./handlers/search.mjs";
+import { registerInteractions } from "./handlers/interactions.mjs";
 import { authMiddleware } from "./middleware/auth-required.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -40,6 +41,7 @@ registerSubreddits(router);
 registerPosts(router);
 registerUsers(router);
 registerSearch(router);
+registerInteractions(router);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
