@@ -52,6 +52,9 @@ export async function runMigrations(dbPath, rootPath = DEFAULT_ROOT) {
     }
   }
   db.close();
+  // Auto-seed if the DB is empty. Lets the server boot (and `npm run
+  // migrate` CLI) work without a second command on a fresh checkout.
+  await seedFromJson(dbPath, rootPath);
 }
 
 export async function seedFromJson(dbPath, rootPath = DEFAULT_ROOT) {

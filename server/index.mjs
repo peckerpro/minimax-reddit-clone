@@ -18,6 +18,10 @@ import { getDb } from "./db.mjs";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { registerHealth } from "./handlers/health.mjs";
 import { registerAuth } from "./handlers/auth.mjs";
+import { registerSubreddits } from "./handlers/subreddits.mjs";
+import { registerPosts } from "./handlers/posts.mjs";
+import { registerUsers } from "./handlers/users.mjs";
+import { registerSearch } from "./handlers/search.mjs";
 import { authMiddleware } from "./middleware/auth-required.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
@@ -32,10 +36,10 @@ const router = new Router();
 router.use(authMiddleware);
 registerHealth(router);
 registerAuth(router);
-// future handlers go here:
-//   registerPosts(router);
-//   registerComments(router);
-//   ...
+registerSubreddits(router);
+registerPosts(router);
+registerUsers(router);
+registerSearch(router);
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
