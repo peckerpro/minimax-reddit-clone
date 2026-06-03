@@ -253,6 +253,67 @@ globalThis.fetch = async (url, opts = {}) => {
     }, 201);
   }
 
+  // ── M5 social writes (stub) ────────────────────────────
+  // POST /api/subreddits/:name/subscribe
+  let mM5 = path.match(/^\/api\/subreddits\/([^/]+)\/subscribe$/);
+  if (mM5) {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    const joined = body.action === "join";
+    return jsonResp({ subscribed: joined, level: joined ? "all" : "none" });
+  }
+  // POST /api/users/:name/follow
+  mM5 = path.match(/^\/api\/users\/([^/]+)\/follow$/);
+  if (mM5) {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({ following: body.action === "follow" });
+  }
+  // POST /api/users/:name/block + /api/subreddits/:name/block
+  mM5 = path.match(/^\/api\/users\/([^/]+)\/block$/);
+  if (mM5) {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({ blocked: body.action === "block" });
+  }
+  mM5 = path.match(/^\/api\/subreddits\/([^/]+)\/block$/);
+  if (mM5) {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({ blocked: body.action === "block" });
+  }
+  // GET /api/notifications[?unread=true]
+  if (path === "/api/notifications" || path === "/api/notifications/") {
+    return jsonResp([
+      { id: "n1", userId: "u_stub", kind: "reply",   sourceKind: "comment", sourceId: "c_x", read: false, createdAt: "2026-06-02T05:14:00Z" },
+      { id: "n2", userId: "u_stub", kind: "upvote",  sourceKind: "post",    sourceId: "p_x", read: true,  createdAt: "2026-06-02T04:30:00Z" },
+    ]);
+  }
+  // POST /api/notifications/:id/read
+  mM5 = path.match(/^\/api\/notifications\/([^/]+)\/read$/);
+  if (mM5) return jsonResp({ ok: true });
+  // POST /api/notifications/mark-all-read
+  if (path === "/api/notifications/mark-all-read" || path === "/api/notifications/mark-all-read/") {
+    return jsonResp({ ok: true, count: 2 });
+  }
+  // GET /api/messages?box=inbox|sent
+  if ((path === "/api/messages" || path === "/api/messages/") && opts.method === "GET") {
+    return jsonResp([
+      { id: "m1", from: "u_ada", to: "u_stub", subject: "hi", body: "yo", read: false, createdAt: "2026-06-02T05:14:00Z" },
+    ]);
+  }
+  // POST /api/messages
+  if ((path === "/api/messages" || path === "/api/messages/") && opts.method === "POST") {
+    let body = {};
+    try { body = JSON.parse(opts?.body || "{}"); } catch {}
+    return jsonResp({
+      id: `m_stub_${Math.floor(Math.random() * 1e6)}`,
+      from: "stub", to: (body.to || "stub").replace(/^u\//, "").replace(/^u_/, ""),
+      subject: body.subject || "", body: body.body || "",
+      read: false, createdAt: new Date().toISOString(),
+    }, 201);
+  }
+
   // default: 404
   return jsonResp({ error: "not_found", message: `no stub for ${path}` }, 404);
 };
@@ -327,6 +388,36 @@ const cases = [
     (r) => Array.isArray(r)],
   ["submitReport",        () => api.submitReport({ targetKind: "post", targetId: "p001", reason: "spam" }),
     (r) => r && r.id?.startsWith("r_") && r.targetExists === true],
+
+  // ── M5 social ─────────────────────────────────────────
+  ["subscribe join",      () => api.subscribe("technology", "join"),
+    (r) => r && r.subscribed === true && r.level === "all"],
+  ["subscribe leave",     () => api.subscribe("technology", "leave"),
+    (r) => r && r.subscribed === false],
+  ["followUser",          () => api.followUser("alice", "follow"),
+    (r) => r && r.following === true],
+  ["unfollowUser",        () => api.followUser("alice", "unfollow"),
+    (r) => r && r.following === false],
+  ["blockUser",           () => api.blockUser("alice", "block"),
+    (r) => r && r.blocked === true],
+  ["unblockUser",         () => api.blockUser("alice", "unblock"),
+    (r) => r && r.blocked === false],
+  ["blockSubreddit",      () => api.blockSubreddit("technology", "block"),
+    (r) => r && r.blocked === true],
+  ["getNotifications",    () => api.getNotifications(),
+    (r) => Array.isArray(r) && r.every((n) => n.id && n.kind)],
+  ["getNotifications unread", () => api.getNotifications({ unread: true }),
+    (r) => Array.isArray(r)],
+  ["markNotificationRead", () => api.markNotificationRead("n_abc"),
+    (r) => r && r.ok === true],
+  ["markAllNotificationsRead", () => api.markAllNotificationsRead(),
+    (r) => r && r.ok === true && typeof r.count === "number"],
+  ["getMessages inbox",   () => api.getMessages("inbox"),
+    (r) => Array.isArray(r) && r.every((m) => m.id && m.from && m.to)],
+  ["getMessages sent",    () => api.getMessages("sent"),
+    (r) => Array.isArray(r)],
+  ["sendMessage",         () => api.sendMessage({ to: "bob", subject: "hi", body: "yo" }),
+    (r) => r && r.id?.startsWith("m_") && r.to === "bob"],
 ];
 
 let bad = 0;

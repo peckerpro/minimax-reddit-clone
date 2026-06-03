@@ -4,16 +4,8 @@ import { h } from "../utils/dom.js";
 import { icon } from "../utils/icons.js";
 import { timeAgo } from "../utils/format.js";
 import { state } from "../state.js";
+import { api } from "../api.js";
 import { toast } from "./toast.js";
-
-const NOTIFICATIONS = [
-  { id: "n1", kind: "reply",   from: "u_ada",         text: "回复了你的评论：「Source: was in the room. Can confirm…」",   at: "2026-06-02T05:14:00Z", unread: true,  link: "#/r/technology/comments/p003" },
-  { id: "n2", kind: "upvote",  from: "u_pixel",       text: "在 r/aww 给你的帖子点了 50 个赞",                                at: "2026-06-02T04:30:00Z", unread: true,  link: "#/r/aww" },
-  { id: "n3", kind: "follow",  from: "u_logwelder",   text: "关注了你",                                                  at: "2026-06-01T22:18:00Z", unread: false, link: "#/u/Logical_Welder3467" },
-  { id: "n4", kind: "mention", from: "u_zenos",       text: "在 r/technology 提到了你：「@you 在这个 thread 总结得很好」",     at: "2026-06-01T20:50:00Z", unread: false, link: "#/r/technology/comments/p003" },
-  { id: "n5", kind: "mod",     from: "r/technology",  text: "你的帖子已被版主批准并发布到 r/technology",                       at: "2026-06-01T18:22:00Z", unread: false, link: "#/r/technology" },
-  { id: "n6", kind: "award",   from: "u_ada",         text: "给了你的评论一个「Heartwarming」奖励",                          at: "2026-06-01T12:00:00Z", unread: false, link: "#/r/funny" },
-];
 
 const ICON_BY_KIND = {
   reply:   "comment",
@@ -22,6 +14,19 @@ const ICON_BY_KIND = {
   mention: "text",
   mod:     "shield",
   award:   "award",
+};
+
+// Notification.kind -> short text. The actual content (e.g. the
+// "50 个赞" or "回复了 X 评论") is left to the server's source
+// record when M6 wires the triggers; for now we render a generic
+// label keyed on the kind.
+const LABEL_BY_KIND = {
+  reply:   "回复了你的内容",
+  upvote:  "给你点了赞",
+  follow:  "关注了你",
+  mention: "在评论中提到了你",
+  mod:     "版主操作",
+  award:   "奖励了你的内容",
 };
 
 export function NotificationsPage() {
@@ -36,46 +41,93 @@ export function NotificationsPage() {
     );
   }
 
-  return h(
+  // Render skeleton; replace with fetched list once it arrives.
+  const list = h("ul", { class: "notif-list" });
+  const headCount = h("span", { class: "notif__count" }, "…");
+
+  const root = h(
     "div",
     { class: "notifications-page" },
     h(
       "div",
       { class: "notifications-page__head" },
-      h("h1", {}, "通知"),
+      h("h1", {}, "通知", headCount),
       h(
         "button",
         {
           class: "btn btn--ghost",
           type: "button",
-          onClick: () => toast("已全部标为已读", { kind: "success" }),
+          onClick: async () => {
+            try {
+              await api.markAllNotificationsRead();
+              toast("已全部标为已读", { kind: "success" });
+              await load();
+            } catch (err) {
+              toast(`操作失败：${err?.message || err}`, { kind: "error" });
+            }
+          },
         },
         "全部标为已读"
       )
     ),
-    h(
-      "ul",
-      { class: "notif-list" },
-      ...NOTIFICATIONS.map((n) =>
+    list
+  );
+
+  function renderItem(n) {
+    const kind = n.kind || "reply";
+    const label = LABEL_BY_KIND[kind] || "新通知";
+    return h(
+      "li",
+      { class: ["notif", n.read ? "" : "notif--unread"].filter(Boolean).join(" ") },
+      h(
+        "a",
+        {
+          class: "notif__link",
+          href: "#/",
+          onClick: async (e) => {
+            // mark as read on click
+            if (!n.read) {
+              try { await api.markNotificationRead(n.id); } catch {}
+            }
+          },
+        },
+        h("span", { class: "notif__icon", html: icon(ICON_BY_KIND[kind] || "bell", { size: 18 }) }),
         h(
-          "li",
-          { class: ["notif", n.unread ? "notif--unread" : ""].join(" ") },
-          h(
-            "a",
-            { class: "notif__link", href: n.link },
-            h(
-              "span",
-              { class: "notif__icon", html: icon(ICON_BY_KIND[n.kind] || "bell", { size: 18 }) }
-            ),
-            h(
-              "div",
-              { class: "notif__body" },
-              h("p", { class: "notif__text" }, n.text),
-              h("span", { class: "notif__time" }, timeAgo(n.at))
-            )
-          )
+          "div",
+          { class: "notif__body" },
+          h("p", { class: "notif__text" }, label),
+          h("span", { class: "notif__time" }, timeAgo(n.createdAt))
         )
       )
-    )
-  );
+    );
+  }
+
+  async function load() {
+    list.replaceChildren(h("li", { class: "notif notif--loading" }, "正在加载通知…"));
+    try {
+      const items = await api.getNotifications();
+      headCount.textContent = items.length ? `（${items.filter((n) => !n.read).length} 未读）` : "";
+      if (!items.length) {
+        list.replaceChildren(
+          h(
+            "li",
+            { class: "notif notif--empty" },
+            h("p", {}, "暂无通知")
+          )
+        );
+        return;
+      }
+      list.replaceChildren(...items.map(renderItem));
+      // update unread count in the header
+      const unread = items.filter((n) => !n.read).length;
+      state.setUnread({ mentions: unread, comments: unread });
+    } catch (err) {
+      list.replaceChildren(
+        h("li", { class: "notif notif--error" }, h("p", {}, `加载失败：${err?.message || err}`))
+      );
+    }
+  }
+  load();
+
+  return root;
 }

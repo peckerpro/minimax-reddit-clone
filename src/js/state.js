@@ -101,14 +101,43 @@ export const state = {
   setLeftNavCollapsed: (leftNavCollapsed) => stateSignal.set((p) => ({ ...p, leftNavCollapsed })),
 
   // ── community membership ─────────────────────────────
+  // M5: subscribe / unsubscribe is server-backed. The local joined
+  // list is the optimistic view; the server returns the authoritative
+  // state. We roll back on failure.
   isJoined: (name) => stateSignal.get().joined.includes(name),
-  toggleJoin: (name) =>
+  toggleJoin: (name) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const wasJoined = cur.joined.includes(name);
+    const action = wasJoined ? "leave" : "join";
+    // Optimistic toggle
     stateSignal.set((p) => ({
       ...p,
-      joined: p.joined.includes(name)
+      joined: wasJoined
         ? p.joined.filter((n) => n !== name)
         : [...p.joined, name],
-    })),
+    }));
+    api.subscribe(name, action).then((res) => {
+      if (res && typeof res.subscribed === "boolean" && res.subscribed !== !wasJoined) {
+        // server disagrees (e.g. another tab); reconcile
+        stateSignal.set((p) => ({
+          ...p,
+          joined: res.subscribed
+            ? (p.joined.includes(name) ? p.joined : [...p.joined, name])
+            : p.joined.filter((n) => n !== name),
+        }));
+      }
+    }).catch((err) => {
+      // Roll back
+      stateSignal.set((p) => ({
+        ...p,
+        joined: wasJoined
+          ? (p.joined.includes(name) ? p.joined : [...p.joined, name])
+          : p.joined.filter((n) => n !== name),
+      }));
+      console.warn("[state.toggleJoin]", err?.message || err);
+    });
+  },
 
   getNotifyLevel: (name) => stateSignal.get().notifyLevel[name] || "none",
   setNotifyLevel: (name, level) =>
@@ -253,38 +282,97 @@ export const state = {
     })),
 
   // ── blocking ─────────────────────────────────────────
+  // M5: block / unblock is server-backed.
   isUserBlocked: (name) => stateSignal.get().blocked.users.includes(name),
   isSubredditBlocked: (name) => stateSignal.get().blocked.subreddits.includes(name),
-  toggleBlockUser: (name) =>
+  toggleBlockUser: (name) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const wasBlocked = cur.blocked.users.includes(name);
+    const action = wasBlocked ? "unblock" : "block";
+    const rollback = (p) => ({
+      ...p,
+      blocked: {
+        ...p.blocked,
+        users: wasBlocked
+          ? (p.blocked.users.includes(name) ? p.blocked.users : [...p.blocked.users, name])
+          : p.blocked.users.filter((n) => n !== name),
+      },
+    });
     stateSignal.set((p) => ({
       ...p,
       blocked: {
         ...p.blocked,
-        users: p.blocked.users.includes(name)
+        users: wasBlocked
           ? p.blocked.users.filter((n) => n !== name)
           : [...p.blocked.users, name],
       },
-    })),
-  toggleBlockSubreddit: (name) =>
+    }));
+    api.blockUser(name, action).then((res) => {
+      if (res && typeof res.blocked === "boolean" && res.blocked !== !wasBlocked) rollback(stateSignal.get());
+    }).catch((err) => {
+      rollback(stateSignal.get());
+      console.warn("[state.toggleBlockUser]", err?.message || err);
+    });
+  },
+  toggleBlockSubreddit: (name) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const wasBlocked = cur.blocked.subreddits.includes(name);
+    const action = wasBlocked ? "unblock" : "block";
+    const rollback = (p) => ({
+      ...p,
+      blocked: {
+        ...p.blocked,
+        subreddits: wasBlocked
+          ? (p.blocked.subreddits.includes(name) ? p.blocked.subreddits : [...p.blocked.subreddits, name])
+          : p.blocked.subreddits.filter((n) => n !== name),
+      },
+    });
     stateSignal.set((p) => ({
       ...p,
       blocked: {
         ...p.blocked,
-        subreddits: p.blocked.subreddits.includes(name)
+        subreddits: wasBlocked
           ? p.blocked.subreddits.filter((n) => n !== name)
           : [...p.blocked.subreddits, name],
       },
-    })),
+    }));
+    api.blockSubreddit(name, action).then((res) => {
+      if (res && typeof res.blocked === "boolean" && res.blocked !== !wasBlocked) rollback(stateSignal.get());
+    }).catch((err) => {
+      rollback(stateSignal.get());
+      console.warn("[state.toggleBlockSubreddit]", err?.message || err);
+    });
+  },
 
   // ── following ─────────────────────────────────────────
+  // M5: follow / unfollow is server-backed.
   isFollowing: (name) => stateSignal.get().followed.includes(name),
-  toggleFollow: (name) =>
+  toggleFollow: (name) => {
+    const cur = stateSignal.get();
+    if (!cur.user) return;
+    const wasFollowing = cur.followed.includes(name);
+    const action = wasFollowing ? "unfollow" : "follow";
+    const rollback = (p) => ({
+      ...p,
+      followed: wasFollowing
+        ? (p.followed.includes(name) ? p.followed : [...p.followed, name])
+        : p.followed.filter((n) => n !== name),
+    });
     stateSignal.set((p) => ({
       ...p,
-      followed: p.followed.includes(name)
+      followed: wasFollowing
         ? p.followed.filter((n) => n !== name)
         : [...p.followed, name],
-    })),
+    }));
+    api.followUser(name, action).then((res) => {
+      if (res && typeof res.following === "boolean" && res.following !== !wasFollowing) rollback(stateSignal.get());
+    }).catch((err) => {
+      rollback(stateSignal.get());
+      console.warn("[state.toggleFollow]", err?.message || err);
+    });
+  },
 
   // ── recently viewed (FIFO 10) ────────────────────────
   pushRecent: (kind, ref) =>

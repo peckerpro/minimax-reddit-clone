@@ -1,7 +1,7 @@
 // Compose Message page (FSM: S_MESSAGE_COMPOSE).
 //
-// v2.1.0: replaces the v2.0.0 toast + back-to-home stub. Real composer UI
-// with a "to" recipient, subject and body. The submit just toasts success.
+// v2.1.0: replaces the v2.0.0 toast + back-to-home stub.
+// v3.0.0 (M5): actually posts to /api/messages instead of toasting mock.
 
 import { h } from "../utils/dom.js";
 import { state } from "../state.js";
@@ -57,11 +57,14 @@ export function ComposePage({ to = "" }) {
         if (!recipient) return toast("请填写收件人", { kind: "warn" });
         if (!subject) return toast("请填写主题", { kind: "warn" });
         if (!body) return toast("请填写内容", { kind: "warn" });
-        const u = await api.getUser(recipient).catch(() => null);
-        if (!u) return toast(`未找到用户 u/${recipient}`, { kind: "error" });
-        toast(`已发送给 u/${u.name}（mock）`, { kind: "success" });
-        subjectIn.value = "";
-        bodyIn.value = "";
+        try {
+          const msg = await api.sendMessage({ to: recipient, subject, body });
+          toast(`已发送给 u/${msg.to}`, { kind: "success" });
+          subjectIn.value = "";
+          bodyIn.value = "";
+        } catch (err) {
+          toast(`发送失败：${err?.message || err}`, { kind: "error" });
+        }
       },
     },
     "发送"

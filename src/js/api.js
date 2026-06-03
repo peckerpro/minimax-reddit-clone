@@ -232,4 +232,49 @@ export const api = {
   async submitReport({ targetKind, targetId, reason, detail }) {
     return postJson("/api/reports", { targetKind, targetId, reason, detail });
   },
+
+  // ── M5 social: subscribe / follow / block / notifications / messages ──
+  // Subscribe to a subreddit. `action` is "join" | "leave".
+  // 200 → {subscribed: bool, level: "all"|"none"}.
+  async subscribe(subName, action) {
+    return postJson(`/api/subreddits/${encodeURIComponent(subName)}/subscribe`, { action });
+  },
+  // Follow a user. `action` is "follow" | "unfollow".
+  // 200 → {following: bool}. 403 on self-follow; 404 on missing user.
+  async followUser(userName, action) {
+    return postJson(`/api/users/${encodeURIComponent(userName)}/follow`, { action });
+  },
+  // Block a user. `action` is "block" | "unblock".
+  // 200 → {blocked: bool}. 403 on self-block; 404 on missing user.
+  async blockUser(userName, action) {
+    return postJson(`/api/users/${encodeURIComponent(userName)}/block`, { action });
+  },
+  // Block a subreddit. `action` is "block" | "unblock".
+  // 200 → {blocked: bool}. 404 on missing subreddit.
+  async blockSubreddit(subName, action) {
+    return postJson(`/api/subreddits/${encodeURIComponent(subName)}/block`, { action });
+  },
+  // Get the caller's notifications, newest first. ?unread=true filters.
+  // 200 → Notification[].
+  async getNotifications(opts = {}) {
+    const q = opts.unread ? "?unread=true" : "";
+    return getJsonOr(`/api/notifications${q}`, []);
+  },
+  // Mark one notification as read. 200 → {ok}. 404 on someone else's.
+  async markNotificationRead(notifId) {
+    return postJson(`/api/notifications/${encodeURIComponent(notifId)}/read`, {});
+  },
+  // Mark all notifications as read. 200 → {ok, count}.
+  async markAllNotificationsRead() {
+    return postJson("/api/notifications/mark-all-read", {});
+  },
+  // Get the caller's messages. `box` is "inbox" (default) | "sent".
+  // 200 → Message[].
+  async getMessages(box = "inbox") {
+    return getJsonOr(`/api/messages?box=${encodeURIComponent(box)}`, []);
+  },
+  // Send a direct message. 201 → Message; 400 / 404 / 403.
+  async sendMessage({ to, subject, body }) {
+    return postJson("/api/messages", { to, subject, body });
+  },
 };

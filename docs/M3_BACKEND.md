@@ -253,21 +253,58 @@ but `targetExists: false` so the M6 mod queue can filter.
 UI doesn't surface these yet, the schema has no `deleted_at` /
 `edited_at` columns). Deferred to M7 polish or M8 hardening.
 
-### M5 (social)
-- `GET /api/notifications` (unauth → 401)
-- `POST /api/notifications/:id/read`
-- `POST /api/notifications/mark-all-read`
-- `GET /api/messages?box=inbox|sent`
-- `POST /api/messages` `{to, subject, body}`
+### M5 (writes — social) — DONE
 
-### M6 (admin / safety)
-- `GET /api/admin/reports` (admin only)
-- `POST /api/admin/reports/:id/resolve`
+All endpoints require auth (401 if anon). 400 invalid on bad
+body / bad `action`. 404 not_found when the target (user /
+subreddit) is missing. 403 forbidden on self-follow / self-block
+/ self-message. The toggle endpoints are idempotent — repeated
+`action: "join"` returns `{subscribed: true}` each time without
+inserting duplicate rows.
 
-### M8 (economy)
-- `GET /api/coins/balance` → `{balance}`
-- `POST /api/coins/purchase` `{packId}` → mock stripe
-- `POST /api/awards/give` `{target, awardId}` → `{success, balance}`
+#### Subscribe
+
+`POST /api/subreddits/:name/subscribe`  body `{action: "join" | "leave"}` → 200 `{subscribed, level}`
+
+#### Follow
+
+`POST /api/users/:name/follow`  body `{action: "follow" | "unfollow"}` → 200 `{following}` (403 on self-follow, 404 on missing user)
+
+#### Block (user + subreddit)
+
+| Method | Path | Body | 200 | 4xx |
+| --- | --- | --- | --- | --- |
+| POST | `/api/users/:name/block`        | `{action: "block" \| "unblock"}` | `{blocked}` | 400 / 403 (self) / 404 |
+| POST | `/api/subreddits/:name/block`   | `{action: "block" \| "unblock"}` | `{blocked}` | 400 / 404 |
+
+The DB schema's `CHECK (user_id <> blocked_id)` enforces the
+self-block invariant as a backstop; the handler returns 403 first
+so the SPA gets a clean error code.
+
+#### Notifications
+
+| Method | Path | Returns | Notes |
+| --- | --- | --- | --- |
+| GET    | `/api/notifications`                  | `Notification[]` (newest first, 50 max) | `?unread=true` filters, `?limit=` caps |
+| POST   | `/api/notifications/:id/read`         | `{ok: true}` | 404 on someone else's id (no leak) |
+| POST   | `/api/notifications/mark-all-read`    | `{ok: true, count}` | count = how many rows flipped |
+
+`Notification` shape (camelCase): `{id, userId, kind, sourceKind,
+sourceId, read, createdAt}`. `kind` is one of `reply` / `upvote`
+/ `follow` / `mention` / `mod` / `award`. The trigger that
+**creates** a notification row lives outside M5 — that's wired in
+M6 (e.g. comment-create fires a `reply` notification, vote fires
+`upvote`, follow fires `follow`).
+
+#### Messages
+
+| Method | Path | Body | 200 | 4xx |
+| --- | --- | --- | --- | --- |
+| GET  | `/api/messages?box=inbox\|sent` | — | `Message[]` (newest first, 100 max) | 400 (bad box) |
+| POST | `/api/messages`                 | `{to, subject, body}` | `Message` (201) | 400 / 403 (self) / 404 (recipient) |
+
+`Message` shape: `{id, from, to, subject, body, read, createdAt}`
+where `from` / `to` are bare usernames (not ids).
 
 ## Sort/filter algorithm (canonical)
 
