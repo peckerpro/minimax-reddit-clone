@@ -1,17 +1,24 @@
 {
   "name": "minimax-reddit-clone",
-  "version": "3.0.0-m0",
+  "version": "3.0.0",
   "description": "A high-fidelity front-end + Node.js backend clone of Reddit (https://www.reddit.com/) with SQLite persistence, hash router SPA, and zero npm dependencies.",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server/index.mjs",
     "start": "node server/index.mjs",
+    "dev": "node server/index.mjs",
+    "prod": "node server/index.mjs",
     "migrate": "node scripts/migrate.mjs",
-    "reset-db": "node scripts/reset-db.mjs",
+    "migrate:no-seed": "node scripts/migrate.mjs --no-seed",
+    "reset": "node scripts/reset-db.mjs",
     "health": "node scripts/health.mjs",
     "lint": "node scripts/lint.mjs",
-    "test": "node scripts/test.mjs",
+    "test": "node scripts/lint.mjs && node scripts/test.mjs",
+    "api-test": "node scripts/api-test.mjs",
+    "smoke": "node scripts/_smoke-m2.mjs && node scripts/_smoke-m3.mjs && node scripts/_smoke-m4.mjs && node scripts/_smoke-m5.mjs && node scripts/_smoke-m6.mjs",
+    "contract": "node --test server/test/contract/auth.test.mjs server/test/contract/interactions.test.mjs server/test/contract/content.test.mjs server/test/contract/social.test.mjs server/test/contract/admin.test.mjs server/test/contract/removed-content.test.mjs",
+    "e2e": "node scripts/_e2e.mjs",
+    "bench": "node scripts/_bench.mjs",
     "build": "node scripts/build.mjs"
   },
   "keywords": [
@@ -20,10 +27,10 @@
     "fullstack",
     "vanilla-js",
     "sqlite",
-    "mock-data"
+    "node:sqlite"
   ],
   "author": "peckerpro",
-  "license": "MIT",
+  "license": "Mit",
   "engines": {
     "node": ">=22.5"
   }
