@@ -15,7 +15,14 @@ export class Router {
   }
 
   add(method, path, handler) {
-    this.routes.push({ method: method.toUpperCase(), path, handler });
+    // Pre-compute the placeholder count at registration time so the
+    // route table can be re-sorted on every handle() call to put
+    // literal matches ahead of placeholder matches. This is a small
+    // O(n log n) per request, but n is tiny (we have ~40 routes)
+    // and avoids a class of bug where registering `/api/posts/:id`
+    // before `/api/posts/saved` would shadow the literal route.
+    const placeholders = (path.match(/:\w+/g) || []).length;
+    this.routes.push({ method: method.toUpperCase(), path, handler, placeholders });
     return this;
   }
 
@@ -34,11 +41,17 @@ export class Router {
       if (!nextCalled) return; // mw handled the response
     }
     const path = (req.url || "/").split("?")[0];
-    for (const r of this.routes) {
+    // M8.audit: sort routes by placeholder count on every handle()
+    // call. Routes with the same placeholder count are matched in
+    // registration order (Array.prototype.sort is stable since
+    // ES2019). n is tiny (~40), so the sort cost is negligible
+    // compared to the actual handler work.
+    const sorted = this.routes.slice().sort((a, b) => a.placeholders - b.placeholders);
+    for (const r of sorted) {
       if (r.method !== req.method) continue;
-      const params = matchPath(r.path, path);
-      if (!params) continue;
-      return r.handler(req, res, ctx, params);
+      const m = matchPath(r.path, path);
+      if (!m) continue;
+      return r.handler(req, res, ctx, m.params);
     }
     // 404
     res.statusCode = 404;
@@ -51,18 +64,30 @@ export class Router {
  * Match a pattern like "/api/posts/:id" against a path like "/api/posts/p_abc".
  * Returns a params object on match, null on no match.
  * Patterns must start with "/" and may have :name placeholders.
+ *
+ * M8.audit: routes that exactly match the path (every segment is
+ * literal) are preferred over routes that would only match via a
+ * placeholder. This is the right call: "/api/posts/saved" should
+ * hit the saved-list handler, not be captured by "/api/posts/:id"
+ * with id="saved". Within a given "goodness" tier, registration
+ * order is the tiebreaker.
  */
 function matchPath(pattern, path) {
   const pParts = pattern.split("/").filter(Boolean);
   const tParts = path.split("/").filter(Boolean);
   if (pParts.length !== tParts.length) return null;
+  let placeholderCount = 0;
   const params = {};
   for (let i = 0; i < pParts.length; i++) {
     if (pParts[i].startsWith(":")) {
+      placeholderCount++;
       params[pParts[i].slice(1)] = decodeURIComponent(tParts[i]);
     } else if (pParts[i] !== tParts[i]) {
       return null;
     }
   }
-  return params;
+  return { params, placeholderCount };
 }
+
+// (sortRoutes was inlined into handle() — sort is per-request,
+// the helper isn't needed.)

@@ -16,6 +16,7 @@ import { DatabaseSync } from "node:sqlite";
 import { Router } from "../../router.mjs";
 import { registerAuth } from "../../handlers/auth.mjs";
 import { authMiddleware } from "../../middleware/auth-required.mjs";
+import { _resetRateLimits } from "../../middleware/rate-limit.mjs";
 import { runMigrations } from "../../../scripts/migrate.mjs";
 import { mkBodyReq, withCtx } from "./_helpers.mjs";
 import { fileURLToPath } from "node:url";
@@ -26,13 +27,18 @@ import { tmpdir } from "node:os";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 async function freshApp() {
+  // M8.audit: rate-limit module is module-level. Reset between
+  // test cases so a prior case's attempts don't leak into the
+  // current one (the audit-fixes B3 test exhausts the bucket and
+  // would otherwise poison the next /login here).
+  _resetRateLimits();
   const dir = mkdtempSync(join(tmpdir(), "auth-test-"));
   const dbPath = join(dir, "test.db");
   await runMigrations(dbPath, root);
   const db = new DatabaseSync(dbPath);
   const router = new Router();
   // Use the REAL auth middleware. Tests that need to fake the user
-  // can still skip this by passing ctx.user directly.
+  // can still skip this by passing ctx.user directamente.
   router.use(authMiddleware);
   registerAuth(router);
   return { dir, dbPath, db, router, close: () => { db.close(); rmSync(dir, { recursive: true, force: true }); } };

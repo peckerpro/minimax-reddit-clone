@@ -1,0 +1,50 @@
+# minimax-reddit-clone v3.0.0 — docker-compose for single-host deploy.
+#
+# Usage:
+#   SESSION_SECRET=$(openssl rand -hex 32) \
+#   docker compose up -d
+#   docker compose logs -f app
+#   docker compose down
+#
+# Notes:
+#   * The `data` named volume persists the SQLite file + WAL sidecars
+#     across container restarts. To wipe state: `docker volume rm
+#     minimax-reddit-clone_data`.
+#   * To run behind nginx / Caddy, expose only port 5173 internally
+#     and add a reverse proxy in front (see docs/DEPLOY.md).
+#   * SESSION_SECRET must be set; if it isn't, the server falls back
+#     to a per-process secret and all cookies are invalidated on
+#     every container restart.
+
+services:
+  app:
+    build: .
+    image: minimax-reddit-clone:3.0.0
+    container_name: reddit-clone
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: production
+      PORT: "5173"
+      DB_PATH: /var/lib/reddit-clone/reddit.db
+      # Provide via `docker compose --env-file` or your secrets
+      # manager. NEVER bake into the image.
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET must be set (try: openssl rand -hex 32)}
+    volumes:
+      - data:/var/lib/reddit-clone
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:5173/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  data:
+    name: minimax-reddit-clone_data

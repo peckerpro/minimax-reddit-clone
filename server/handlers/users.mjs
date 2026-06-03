@@ -3,6 +3,7 @@
 
 import { sendError, sendJson } from "../lib/errors.mjs";
 import { sortPosts, applyTimeRange } from "../lib/posts.mjs";
+import { requireAuth } from "../middleware/auth-required.mjs";
 
 function shapeUser(u) {
   return {
@@ -69,6 +70,44 @@ export function registerUsers(router) {
     const filtered = applyTimeRange(rows, t);
     const sorted = sortPosts(filtered, sort);
     sendJson(res, sorted.slice(0, limit).map(shapePost));
+  });
+
+  // ── M8.audit (N2): GET /api/posts/saved + /api/posts/hidden ──
+  // Lists the caller's saved / hidden posts so they survive a new
+  // device login (the local-only state.saved/state.hidden arrays
+  // are only on this device). 401 if not logged in.
+  router.get("/api/posts/saved", (req, res, ctx) => {
+    try { requireAuth(ctx); } catch { return sendError(res, "unauthorized", "login required"); }
+    const rows = ctx.db.prepare(`
+      SELECT p.*, u.name AS author_name, s.name AS subreddit_name,
+             (SELECT COUNT(*) FROM comments cm
+                WHERE cm.post_id = p.id AND cm.removed_at IS NULL) AS comments_count
+        FROM saved_posts sp
+        JOIN posts p       ON p.id = sp.post_id
+        JOIN users u       ON u.id = p.author_id
+        JOIN subreddits s  ON s.id = p.subreddit_id
+       WHERE sp.user_id = ? AND p.removed_at IS NULL
+       ORDER BY sp.created_at DESC
+       LIMIT 200
+    `).all(ctx.user.id);
+    sendJson(res, rows.map(shapePost));
+  });
+
+  router.get("/api/posts/hidden", (req, res, ctx) => {
+    try { requireAuth(ctx); } catch { return sendError(res, "unauthorized", "login required"); }
+    const rows = ctx.db.prepare(`
+      SELECT p.*, u.name AS author_name, s.name AS subreddit_name,
+             (SELECT COUNT(*) FROM comments cm
+                WHERE cm.post_id = p.id AND cm.removed_at IS NULL) AS comments_count
+        FROM hidden_posts hp
+        JOIN posts p       ON p.id = hp.post_id
+        JOIN users u       ON u.id = p.author_id
+        JOIN subreddits s  ON s.id = p.subreddit_id
+       WHERE hp.user_id = ? AND p.removed_at IS NULL
+       ORDER BY hp.created_at DESC
+       LIMIT 200
+    `).all(ctx.user.id);
+    sendJson(res, rows.map(shapePost));
   });
 
   router.get("/api/users/:name/comments", (req, res, ctx, params) => {

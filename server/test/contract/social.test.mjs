@@ -19,6 +19,7 @@ import { Router } from "../../router.mjs";
 import { registerAuth } from "../../handlers/auth.mjs";
 import { registerSocial } from "../../handlers/social.mjs";
 import { authMiddleware } from "../../middleware/auth-required.mjs";
+import { _resetRateLimits } from "../../middleware/rate-limit.mjs";
 import { runMigrations } from "../../../scripts/migrate.mjs";
 import { mkBodyReq, withCtx } from "./_helpers.mjs";
 import { fileURLToPath } from "node:url";
@@ -31,6 +32,7 @@ import { newSessionId, sessionCookieValue } from "../../auth.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 async function freshApp() {
+  _resetRateLimits();
   const dir = mkdtempSync(join(tmpdir(), "m5-test-"));
   const dbPath = join(dir, "test.db");
   await runMigrations(dbPath, root);
@@ -70,11 +72,22 @@ function makeCookie(db, name) {
 }
 
 function insertNotification(a, userId, opts = {}) {
+  // Mirrors production `fireNotification` dedup: a UNIQUE INDEX on
+  // (user_id, kind, source_kind, source_id) was added in migration
+  // 0003. If a row with the same key already exists we return its id
+  // instead of throwing — that's what the real handler does and it's
+  // what the test expects (idempotent inserts).
+  const kind      = opts.kind      || "reply";
+  const sourceKind = opts.sourceKind || "comment";
+  const sourceId  = opts.sourceId  || "c_xxx";
+  const existing = a.db.prepare(
+    "SELECT id FROM notifications WHERE user_id = ? AND kind = ? AND source_kind = ? AND source_id = ?"
+  ).get(userId, kind, sourceKind, sourceId);
+  if (existing) return existing.id;
   const id = `n_${ulid()}`;
   a.db.prepare(`INSERT INTO notifications (id, user_id, kind, source_kind, source_id, read, created_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`)
-    .run(id, userId, opts.kind || "reply", opts.sourceKind || "comment",
-         opts.sourceId || "c_xxx", opts.read ? 1 : 0, new Date().toISOString());
+    .run(id, userId, kind, sourceKind, sourceId, opts.read ? 1 : 0, new Date().toISOString());
   return id;
 }
 
@@ -287,8 +300,9 @@ test("GET /api/notifications?unread=true filters", async () => {
   const a = await freshApp();
   try {
     const s = await seed(a);
-    insertNotification(a, s.aliceId, { read: true });
-    insertNotification(a, s.aliceId, { read: false });
+    // Distinct source keys so the 0003 UNIQUE index doesn't merge them.
+    insertNotification(a, s.aliceId, { sourceId: "c_1", read: true });
+    insertNotification(a, s.aliceId, { sourceId: "c_2", read: false });
     const r = await withCtx(a.router, mkBodyReq("GET", "/api/notifications?unread=true", null), { db: a.db, cookieHeader: s.aliceCookie });
     assert.equal(r.body.length, 1);
     assert.equal(r.body[0].read, false);
@@ -321,9 +335,10 @@ test("POST /api/notifications/mark-all-read counts", async () => {
   const a = await freshApp();
   try {
     const s = await seed(a);
-    insertNotification(a, s.aliceId, { read: false });
-    insertNotification(a, s.aliceId, { read: false });
-    insertNotification(a, s.aliceId, { read: true });
+    // Distinct source keys so the 0003 UNIQUE index doesn't merge them.
+    insertNotification(a, s.aliceId, { sourceId: "c_1", read: false });
+    insertNotification(a, s.aliceId, { sourceId: "c_2", read: false });
+    insertNotification(a, s.aliceId, { sourceId: "c_3", read: true });
     const r = await withCtx(a.router, mkBodyReq("POST", "/api/notifications/mark-all-read", {}), { db: a.db, cookieHeader: s.aliceCookie });
     assert.equal(r.statusCode, 200);
     assert.equal(r.body.count, 2);

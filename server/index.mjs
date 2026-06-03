@@ -97,13 +97,41 @@ async function serveStatic(req, res) {
 }
 
 const server = createServer(async (req, res) => {
+  // M8.audit (B6): tiny request log line. Format:
+  //   [<ISO ts>] <method> <path> <status> <bytes> <duration>ms
+  // Skipped for static files (we'd flood the log with /css/*.css
+  // and /js/*.js hits from the SPA's <link>/<script> tags).
+  const isApi = (req.url || "/").startsWith("/api/");
+  const t0 = process.hrtime.bigint();
+  let bytes = 0;
+  res.on("finish", () => {
+    if (!isApi) return;
+    const dtMs = Number(process.hrtime.bigint() - t0) / 1e6;
+    console.log(
+      `[req] ${new Date().toISOString()} ${req.method} ${req.url} ${res.statusCode} ${bytes}B ${dtMs.toFixed(1)}ms`
+    );
+  });
+  const captureWrite = res.write.bind(res);
+  res.write = (chunk, ...rest) => {
+    if (chunk) bytes += Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(chunk);
+    return captureWrite(chunk, ...rest);
+  };
+  const captureEnd = res.end.bind(res);
+  res.end = (chunk, ...rest) => {
+    if (chunk) bytes += Buffer.isBuffer(chunk) ? chunk.length : Buffer.byteLength(chunk);
+    return captureEnd(chunk, ...rest);
+  };
+
   try {
-    if ((req.url || "/").startsWith("/api/")) {
+    if (isApi) {
       // touch the DB so /api/health works even before any handler ran
       const db = getDb(DB_PATH);
       const ctx = {
         db,
         cookieHeader: req.headers["cookie"] || "",
+        // M8.audit: pass the request IP (or null) to ctx for rate-limit
+        // keying + future audit log needs.
+        ip: (req.socket?.remoteAddress || "").replace(/^::ffff:/, "") || null,
       };
       try {
         await router.handle(req, res, ctx);
@@ -130,6 +158,36 @@ const server = createServer(async (req, res) => {
 
 const PORT = Number(process.env.PORT) || 5173;
 server.listen(PORT, () => {
-  console.log(`[reddit-clone] v3.0.0-m0  →  http://localhost:${PORT}`);
+  console.log(`[reddit-clone] v3.0.0  →  http://localhost:${PORT}`);
   console.log(`[reddit-clone] db:  ${DB_PATH}`);
 });
+
+// M8.audit (B4): graceful shutdown. On SIGTERM / SIGINT, stop
+// accepting new connections, wait for in-flight requests to drain,
+// then close the DB cleanly so SQLite can checkpoint the WAL
+// (otherwise the .db-wal file can be left larger than expected
+// for the systemd stop cycle). systemd sends SIGTERM on
+// `systemctl stop`; Ctrl-C in dev sends SIGINT.
+let shuttingDown = false;
+async function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`[reddit-clone] ${signal} received, draining...`);
+  // Stop accepting new connections; existing ones continue.
+  server.close(() => {
+    console.log("[reddit-clone] http server closed");
+    // Close the DB last so any pending writes (the in-flight
+    // requests) can land cleanly.
+    try {
+      import("./db.mjs").then(({ closeDb }) => closeDb());
+    } catch {}
+    setTimeout(() => process.exit(0), 50);
+  });
+  // Hard exit if drain takes > 5s.
+  setTimeout(() => {
+    console.warn("[reddit-clone] drain timeout, exiting hard");
+    process.exit(1);
+  }, 5000).unref();
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));

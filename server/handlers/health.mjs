@@ -17,7 +17,7 @@ export function registerHealth(router) {
       ok: dbStatus === "up",
       db: dbStatus,
       uptime: Math.round(process.uptime()),
-      version: "3.0.0-m0",
+      version: "3.0.0",
       node: process.version,
     }));
   });

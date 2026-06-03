@@ -194,6 +194,16 @@ export const api = {
   async toggleHidePost(postId) {
     return postJson(`/api/posts/${encodeURIComponent(postId)}/hide`, {});
   },
+  // M8.audit (N2): list the caller's saved / hidden posts. The
+  // local state.saved / state.hidden arrays are per-device; on a
+  // fresh login you need a server roundtrip to repopulate. null on
+  // 401 (anon caller; SPA should be authed before this).
+  async getSavedPosts() {
+    return getJsonOr("/api/posts/saved", []);
+  },
+  async getHiddenPosts() {
+    return getJsonOr("/api/posts/hidden", []);
+  },
 
   // ── M4 writes: content (posts / comments / drafts / subs / reports) ──
   // Submit a new post. `subreddit` is the bare name (no `r/` prefix).

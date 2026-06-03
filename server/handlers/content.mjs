@@ -150,20 +150,13 @@ function validateReportBody(body) {
   return errs;
 }
 
-// Compute the materialized path for a comment. Top-level comments
-// have path "/<id>"; replies to a comment have path
-// "<parent.path>/<id>". Used to build the depth field and the
-// SPA's nested tree.
-function computeCommentPath(db, parentId, newId) {
-  if (!parentId) return `/${newId}`;
-  const parent = db.prepare("SELECT path FROM comments WHERE id = ?").get(parentId);
-  if (!parent) return null;             // parent missing — caller 404s
-  return `${parent.path}/${newId}`;
-}
-
+// Compute the depth field from a materialized path. Top-level
+// "/c_abc" -> 0; a reply "/c_abc/c_def" -> 1; nested deeper chains
+// add 1 per "/". The path itself is built inline in
+// POST /api/posts/:id/comments (M8.audit) because the parent
+// must be validated as belonging to the same post first.
 function computeDepthFromPath(path) {
   if (!path) return 0;
-  // count slashes minus the leading one. "/c_abc" -> 0; "/c_abc/c_def" -> 1.
   const parts = path.split("/").filter(Boolean);
   return Math.max(0, parts.length - 1);
 }
@@ -223,8 +216,22 @@ export function registerContent(router) {
       const post = ctx.db.prepare("SELECT id FROM posts WHERE id = ?").get(params.id);
       if (!post) return { __postNotFound: true };
       const id = `c_${ulid()}`;
-      const path = computeCommentPath(ctx.db, body.parentId, id);
-      if (path == null) return { __parentNotFound: true };
+      // M8.audit: when parentId is given, the parent must belong to
+      // the SAME post — otherwise the comment is created under one post
+      // but its parent_id points into a different post's tree, which
+      // would either orphan the new comment (client tree builder treats
+      // unknown parent_id as a root) or worse, cross-pollute two
+      // trees. Add `AND post_id = ?` to the lookup.
+      let path = null;
+      if (body.parentId) {
+        const parent = ctx.db.prepare(
+          "SELECT id, path FROM comments WHERE id = ? AND post_id = ?"
+        ).get(body.parentId, post.id);
+        if (!parent) return { __parentNotFound: true };
+        path = `${parent.path}/${id}`;
+      } else {
+        path = `/${id}`;
+      }
       const depth = computeDepthFromPath(path);
       ctx.db.prepare(`
         INSERT INTO comments (id, post_id, parent_id, author_id, body, score, depth, path, created_at)

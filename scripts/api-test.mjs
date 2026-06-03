@@ -86,6 +86,31 @@ globalThis.fetch = async (url, opts = {}) => {
     }
   }
 
+  // M8.audit (N2): /api/posts/saved and /api/posts/hidden must be matched
+  // BEFORE the generic /api/posts/:id regex below — otherwise the
+  // `:id` placeholder would catch "saved"/"hidden" as if they were
+  // post ids, and the stub would 404. The real server has the same
+  // bug (fixed in server/router.mjs by sorting routes so literal
+  // matches win); the stub mirrors that.
+  if (path === "/api/posts/saved" || path === "/api/posts/saved/") {
+    return jsonResp([
+      { id: "p_saved1", subreddit: "technology", author: "ada",
+        title: "saved post", body: "", kind: "text",
+        image: null, url: null, domain: null, flair: null,
+        score: 5, comments: 0, nsfw: false, spoiler: false, pinned: false,
+        createdAt: "2026-06-02T05:14:00Z" },
+    ]);
+  }
+  if (path === "/api/posts/hidden" || path === "/api/posts/hidden/") {
+    return jsonResp([
+      { id: "p_hidden1", subreddit: "news", author: "u_404",
+        title: "hidden post", body: "", kind: "text",
+        image: null, url: null, domain: null, flair: null,
+        score: 1, comments: 0, nsfw: false, spoiler: false, pinned: false,
+        createdAt: "2026-06-01T05:14:00Z" },
+    ]);
+  }
+
   // /api/posts[/:id[/(comments|related|crossposts)]]   (GET only — POSTs
   // /api/posts/:id/comments fall through to the M4 handler below)
   m = path.match(/^\/api\/posts\/([^/]+)(?:\/(comments|related|crossposts))?$/);
@@ -438,6 +463,12 @@ const cases = [
     (r) => Array.isArray(r)],
   ["sendMessage",         () => api.sendMessage({ to: "bob", subject: "hi", body: "yo" }),
     (r) => r && r.id?.startsWith("m_") && r.to === "bob"],
+
+  // ── M8.audit (N2) ────────────────────────────────────────
+  ["getSavedPosts",       () => api.getSavedPosts(),
+    (r) => Array.isArray(r) && r.every((p) => p.id)],
+  ["getHiddenPosts",      () => api.getHiddenPosts(),
+    (r) => Array.isArray(r) && r.every((p) => p.id)],
 
   // ── M6 admin / mod queue ───────────────────────────────
   ["getAdminReports",     () => api.getAdminReports(),

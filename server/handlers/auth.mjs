@@ -12,6 +12,7 @@ import {
 } from "../auth.mjs";
 import { ulid } from "../lib/ulid.mjs";
 import { requireAuth } from "../middleware/auth-required.mjs";
+import { rateLimit } from "../middleware/rate-limit.mjs";
 
 const USERNAME_RE = /^[A-Za-z0-9_-]{3,20}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -51,7 +52,12 @@ async function createSession(db, userId) {
 }
 
 export function registerAuth(router) {
-  router.post("/api/auth/register", async (req, res, ctx) => {
+  // M8.audit (B3): rate limit auth endpoints at 5 attempts per IP per
+  // window. Login gets a 5s window (defense against brute force);
+  // register gets a 60s window (lower volume + higher cost of
+  // false positives on legit signups).
+  // rateLimit returns a handler wrapper: rateLimit({...})(handler).
+  router.post("/api/auth/register", rateLimit({ limit: 5, windowMs: 60_000 })(async (req, res, ctx) => {
     let body;
     try { body = await readBody(req); }
     catch { return sendError(res, "invalid", "malformed JSON body"); }
@@ -79,9 +85,9 @@ export function registerAuth(router) {
     const { sid, expiresAt } = await createSession(ctx.db, userId);
     setSessionCookie(res, sid);
     return sendJson(res, { user: { id: userId, name: body.name, email: body.email, karma: 1, role: "user", avatarColor: "#ff4500", bio: "", createdAt: nowIso }, sessionExpiresAt: expiresAt }, 201);
-  });
+  }));
 
-  router.post("/api/auth/login", async (req, res, ctx) => {
+  router.post("/api/auth/login", rateLimit({ limit: 5, windowMs: 5_000 })(async (req, res, ctx) => {
     let body;
     try { body = await readBody(req); }
     catch { return sendError(res, "invalid", "malformed JSON body"); }
@@ -96,7 +102,7 @@ export function registerAuth(router) {
     const { sid, expiresAt } = await createSession(ctx.db, u.id);
     setSessionCookie(res, sid);
     return sendJson(res, { user: publicUser(u), sessionExpiresAt: expiresAt });
-  });
+  }));
 
   router.post("/api/auth/logout", (req, res, ctx) => {
     const cookie = ctx.cookieHeader || "";

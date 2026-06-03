@@ -18,6 +18,7 @@ import { Router } from "../../router.mjs";
 import { registerAuth } from "../../handlers/auth.mjs";
 import { registerInteractions } from "../../handlers/interactions.mjs";
 import { authMiddleware } from "../../middleware/auth-required.mjs";
+import { _resetRateLimits } from "../../middleware/rate-limit.mjs";
 import { runMigrations } from "../../../scripts/migrate.mjs";
 import { mkBodyReq, withCtx } from "./_helpers.mjs";
 import { fileURLToPath } from "node:url";
@@ -29,6 +30,8 @@ import { ulid } from "../../lib/ulid.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 async function freshApp() {
+  // M8.audit: rate-limit module is module-level; reset between cases.
+  _resetRateLimits();
   const dir = mkdtempSync(join(tmpdir(), "m3-test-"));
   const dbPath = join(dir, "test.db");
   await runMigrations(dbPath, root);

@@ -26,6 +26,7 @@ import { registerUsers } from "../../handlers/users.mjs";
 import { registerSearch } from "../../handlers/search.mjs";
 import { registerAdmin } from "../../handlers/admin.mjs";
 import { authMiddleware } from "../../middleware/auth-required.mjs";
+import { _resetRateLimits } from "../../middleware/rate-limit.mjs";
 import { runMigrations } from "../../../scripts/migrate.mjs";
 import { mkBodyReq, withCtx } from "./_helpers.mjs";
 import { fileURLToPath } from "node:url";
@@ -38,6 +39,7 @@ import { newSessionId, sessionCookieValue } from "../../auth.mjs";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 
 async function freshApp() {
+  _resetRateLimits();
   const dir = mkdtempSync(join(tmpdir(), "m7-filter-test-"));
   const dbPath = join(dir, "test.db");
   await runMigrations(dbPath, root);
