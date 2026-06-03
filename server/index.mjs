@@ -17,6 +17,8 @@ import { Router } from "./router.mjs";
 import { getDb } from "./db.mjs";
 import { runMigrations } from "../scripts/migrate.mjs";
 import { registerHealth } from "./handlers/health.mjs";
+import { registerAuth } from "./handlers/auth.mjs";
+import { authMiddleware } from "./middleware/auth-required.mjs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const ROOT = resolve(__dirname, "..");                       // project root
@@ -27,10 +29,12 @@ const DB_PATH = process.env.DB_PATH || join(ROOT, "data", "reddit.db");
 await runMigrations(DB_PATH, ROOT);
 
 const router = new Router();
+router.use(authMiddleware);
 registerHealth(router);
+registerAuth(router);
 // future handlers go here:
-//   registerAuth(router);
 //   registerPosts(router);
+//   registerComments(router);
 //   ...
 
 const MIME = {
@@ -84,8 +88,21 @@ const server = createServer(async (req, res) => {
   try {
     if ((req.url || "/").startsWith("/api/")) {
       // touch the DB so /api/health works even before any handler ran
-      getDb(DB_PATH);
-      await router.handle(req, res, { db: getDb(DB_PATH) });
+      const db = getDb(DB_PATH);
+      const ctx = {
+        db,
+        cookieHeader: req.headers["cookie"] || "",
+      };
+      try {
+        await router.handle(req, res, ctx);
+      } catch (e) {
+        if (e?.code && /^(unauthorized|forbidden|not_found|invalid|conflict|rate_limited)$/.test(e.code)) {
+          return import("./lib/errors.mjs").then(({ sendError }) =>
+            sendError(res, e.code, e.message, e.fields)
+          );
+        }
+        throw e;
+      }
     } else {
       await serveStatic(req, res);
     }

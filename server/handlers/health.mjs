@@ -3,13 +3,11 @@
 // DevOps-supplied docker healthcheck. The `db: "up"` check is a
 // trivial SELECT 1 — if the DB is missing or corrupt, this returns 503.
 
-import { getDb } from "../db.mjs";
-
 export function registerHealth(router) {
-  router.get("/api/health", (_req, res) => {
+  router.get("/api/health", (_req, res, ctx) => {
     let dbStatus = "up";
     try {
-      getDb().prepare("SELECT 1 AS ok").get();
+      ctx.db.prepare("SELECT 1 AS ok").get();
     } catch (e) {
       dbStatus = "down: " + (e?.message || "unknown");
     }

@@ -222,7 +222,7 @@ router.add("/register", () =>
   runRoute(async () => {
     const { LoginPage } = await import("./components/login.js");
     shell.setSortbarVisible(false);
-    return applyResult(LoginPage({ next: "#/", title: "注册" }));
+    return applyResult(LoginPage({ next: "#/", title: "注册", mode: "register" }));
   })
 );
 
@@ -362,3 +362,17 @@ router.subscribe(({ pattern, params }) => {
     state.pushRecent("u", params.name);
   }
 });
+
+// Boot rehydration: pull the current user from the session cookie.
+// Runs once on page load. If the cookie is missing/expired, ctx.user
+// stays null and the SPA behaves as anonymous.
+import { auth } from "./auth.js";
+(async () => {
+  try {
+    const me = await auth.me();
+    if (me) state.login(me);
+  } catch (e) {
+    // Server unreachable or other boot error; stay anonymous.
+    console.warn("[boot] /api/auth/me failed:", e?.message || e);
+  }
+})();

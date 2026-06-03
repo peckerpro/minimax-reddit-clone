@@ -35,11 +35,14 @@ export async function runMigrations(dbPath, rootPath = DEFAULT_ROOT) {
   for (const f of files) {
     if (applied.has(f)) continue;
     const sql = await readFile(join(dir, f), "utf8");
-    const stmt = db.prepare(`INSERT INTO _migrations (id, name, applied_at) VALUES (?, ?, ?)`);
     db.exec("BEGIN");
     try {
       db.exec(sql);
-      stmt.run(Date.now(), f, new Date().toISOString());
+      // Use a literal exec instead of a prepared statement to avoid
+      // dangling statement handles (matters for short-lived test DBs).
+      const now = Date.now();
+      const iso = new Date().toISOString();
+      db.exec(`INSERT INTO _migrations (id, name, applied_at) VALUES (${now}, '${f.replace(/'/g, "''")}', '${iso}')`);
       db.exec("COMMIT");
       console.log(`[migrate] applied ${f}`);
     } catch (e) {
